@@ -45,11 +45,15 @@ Tensor::Tensor(): data_(nullptr), shape_({}), strides_({}), numel_(0), dtype_(DT
 Tensor::Tensor(const std::vector<int64_t>& shape, DType dtype, Device device) 
             : shape_(shape), dtype_(dtype), device_(device)
             {
+
+                if (shape.empty()){
+                    throw std::invalid_argument("Se necesita al menos una dimension para crear el tensor");
+                }
                 // Numero de elementos que va a tener n uestro tensor
                 numel_ = 1;
                 for (int64_t d : shape_){
                     if (d < 0){
-                        std::invalid_argument("Las dimensiones no pueden ser negativas");
+                        throw std::invalid_argument("Las dimensiones no pueden ser negativas");
                     }
                     numel_ *= d;
                 }
@@ -169,61 +173,36 @@ Tensor Tensor::zeros(const std::vector<int64_t>& shape, DType dtype, Device devi
 }
 
 Tensor Tensor::ones(const std::vector<int64_t>& shape, DType dtype, Device device) {
+    
     Tensor t(shape, dtype, device);
-    if (t.numel() > 0){
-        if (device == Device::CPU){
-            switch(dtype){
-                case DType::I32:{
-                    auto *ptr = static_cast<int32_t *>(t.data_);
-                    for(uint64_t i = 0; i < t.numel(); i+=1){
-                        ptr[i] = static_cast<int32_t>(1);
-                    }
-                }
-                break;
-                
-                case DType::I64:{
-                    auto *ptr = static_cast<int64_t *>(t.data_);
-                    for(uint64_t i = 0; i < t.numel(); i+=1){
-                        ptr[i] = static_cast<int64_t>(1);
-                    }
-                }
-                break;
+    
+    if (t.numel() == 0) return t;
 
-                case DType::F32:{
-                    auto *ptr = static_cast<float *>(t.data_);
-                    for(uint64_t i = 0; i < t.numel(); i+=1){
-                        ptr[i] = static_cast<float>(1);
-                    }
-                }
-                break;
-
-                case DType::F64:{
-                    auto *ptr = static_cast<double *>(t.data_);
-                    for(uint64_t i = 0; i < t.numel(); i+=1){
-                        ptr[i] = static_cast<double>(1);
-                    }
-                }
-                break;
+    if(device == Device::CPU){
+        DISPATCH_ALL_TYPES(dtype, scalar_t,{
+            auto *ptr = static_cast<scalar_t *>(t.data_);
+            for (uint64_t i = 0; i < t.numel(); i++){
+                ptr[i] = static_cast<scalar_t>(1);
             }
-        } else{
-            throw std::runtime_error("CUDA no implementado todavía.");
-        }
-
+        });
+    } else{
+        throw std::runtime_error("CUDA no implementado todavía.");
     }
     return t;
 }
 
 Tensor Tensor::arange(int64_t start, int64_t end, int64_t step, DType dtype, Device device) {
 
-    if (step <= 0){
-        throw std::invalid_argument("Step tiene que ser mayor que 0");
+    if (step == 0){
+        throw std::invalid_argument("Step no puede ser 0");
     }
-    if ((start < end && step < 0) || (start > end && step > 0)){
+    
+    int64_t diff = end - start;
+    if ((diff > 0 && step < 0) || ( diff < 0 && step > 0)){
         throw std::invalid_argument("Pasa una combinacion buena de step, start, end");
     }
 
     // Calculamos tamaño del tensor
-    int64_t diff = end-start;
     int64_t size = static_cast<int64_t>((std::abs(diff)+std::abs(step)-1)/abs(step));
 
     // Instanciamos el tensor
@@ -234,45 +213,13 @@ Tensor Tensor::arange(int64_t start, int64_t end, int64_t step, DType dtype, Dev
     }
 
     if (device == Device::CPU) {
-
-        switch(dtype){
-            case DType::I32:{
-                auto *ptr = static_cast<int32_t *>(t.data_);
-                int64_t val = start;
-                for(int64_t i = 0; i < size; ++i, val += step){
-                    ptr[i] = static_cast<int32_t>(val);
-                }
+        DISPATCH_ALL_TYPES(dtype, scalar_t, {
+            auto *ptr = static_cast<scalar_t *>(t.data_);
+            int64_t val = start;
+            for(int64_t i = 0; i < size; ++i, val += step){
+                ptr[i] = static_cast<scalar_t>(val);
             }
-            break;
-            
-            case DType::I64:{
-                auto *ptr = static_cast<int64_t *>(t.data_);
-                int64_t val = start;
-                for(int64_t i = 0; i < size; i++, val += step){
-                    ptr[i] = static_cast<int64_t>(val);
-                }
-            }
-            break;
-
-            case DType::F32:{
-                auto *ptr = static_cast<float*>(t.data_);
-                int64_t val = start;
-                for(int64_t i = 0; i < size; i++, val += step){
-                    ptr[i] = static_cast<float>(val);
-                }
-            }
-            break;
-
-            case DType::F64:{
-                auto *ptr = static_cast<double *>(t.data_);
-                int64_t val = start;
-                for(int64_t i = 0; i < size; i++, val += step){
-                    ptr[i] = static_cast<double>(val);
-                }
-            }
-            break;
-
-        }
+        });
 
     }else{
         throw std::runtime_error("CUDA no implementado todavía.");
@@ -293,21 +240,9 @@ void Tensor::print(const std::string& name) const {
 
 static void print_scalar(std::ostream& os, const void * data, int64_t flat_idx, DType dtype){
 
-    switch(dtype){
-        case DType::I32:
-            os << static_cast<const int32_t *>(data)[flat_idx];
-            break;
-        case DType::I64:
-            os << static_cast<const int64_t *>(data)[flat_idx];
-            break;
-        case DType::F32:
-            os << static_cast<const float *>(data)[flat_idx];
-            break;
-        case DType::F64:
-            os << static_cast<const double *>(data)[flat_idx];
-            break;    
-
-    }
+    DISPATCH_ALL_TYPES(dtype, scalar_t, {
+        os << static_cast<const scalar_t *>(data)[flat_idx];
+    });
 }
 
 
@@ -318,7 +253,7 @@ static void print_tensor_data(std::ostream& os, const Tensor& t, size_t dim, int
     if (dim == t.shape().size()-1){
         os << "[";
         for (int64_t i = 0; i < t.shape()[dim]; ++i){
-            print_scalar(os, t.data(), offset, t.dtype());
+            print_scalar(os, t.data(), offset + i * t.strides()[dim], t.dtype());
             if (i+1 < t.shape()[dim]){
                 os << ",";
             }
@@ -354,7 +289,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& t) {
     // Impresión de valores
     os << "  - values: ";
     if (t.data_ == nullptr || t.numel_ == 0) {
-        os << "]";
+        os << "[]";
         return os;
     }
 

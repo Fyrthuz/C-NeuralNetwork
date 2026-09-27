@@ -1,6 +1,15 @@
 #ifndef TENSOR_H
 #define TENSOR_H
 
+#define DISPATCH_ALL_TYPES(dtype, TYPE_NAME, ...) \
+    switch (dtype) { \
+        case DType::F32: { using TYPE_NAME = float;   __VA_ARGS__; break; } \
+        case DType::F64: { using TYPE_NAME = double;  __VA_ARGS__; break; } \
+        case DType::I32: { using TYPE_NAME = int32_t; __VA_ARGS__; break; } \
+        case DType::I64: { using TYPE_NAME = int64_t; __VA_ARGS__; break; } \
+        default: throw std::runtime_error("DType no soportado");}
+
+
 #include <vector>
 #include <cstdint>
 #include <ostream>
@@ -54,12 +63,10 @@ class Tensor{
         inline static uint64_t get_element_size(DType dtype){
                 switch (dtype)
                     {
-                        case DType::F32:
-                        case DType::I32:
-                            return 4;
-                        case DType::F64:
-                        case DType::I64:
-                            return 8;
+                        case DType::F32: return sizeof(float);
+                        case DType::I32: return sizeof(uint32_t);
+                        case DType::F64: return sizeof(double);
+                        case DType::I64: return sizeof(uint64_t);
                     }
                 throw std::invalid_argument("Tipo Dtype no soportado o desconocido");
             }        
