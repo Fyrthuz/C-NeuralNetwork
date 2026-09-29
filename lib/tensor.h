@@ -70,7 +70,11 @@ class Tensor{
                     }
                 throw std::invalid_argument("Tipo Dtype no soportado o desconocido");
             }        
-
+        
+        // Utilidades
+        Tensor clone() const;
+        Tensor flatten() const;
+        Tensor transpose(int64_t dim0, int64_t dim1) const;
 
         // Getters
         const std::vector<int64_t>& shape() const { return shape_ ;}

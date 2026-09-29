@@ -308,4 +308,88 @@ std::ostream& operator<<(std::ostream& os, const Tensor& t) {
     return os;
 }
 
+// Utilidades
+
+Tensor Tensor::clone() const{
+    return *this;
+}
+
+
+Tensor Tensor::transpose(int64_t dim0, int64_t dim1) const {
+
+
+    int64_t ndim = static_cast<int64_t>(shape_.size());
+
+    // Controlamos valores negativos
+    if (dim0 < 0) dim0 += ndim;
+    if (dim1 < 0) dim1 += ndim;
+
+    if (dim0 < 0 || dim0 >= ndim || dim1 < 0 || dim1 >= ndim) {
+        throw std::invalid_argument("Dimension fuera de rango para transponer");
+    }
+
+    // Controlamos que no se produzca el mismo tensor al final del proceso
+    if (dim0 == dim1 || numel_ <= 1){
+        return this->clone();
+    }
+
+
+    // Nueva shape y strides del tensor
+    std::vector<int64_t> new_shape = shape_;
+    std::swap(new_shape[dim0], new_shape[dim1]);
+
+    std::vector<int64_t> new_strides = strides_;
+    std::swap(new_strides[dim0], new_strides[dim1]);
+
+    // Tensor resultado
+    Tensor t = Tensor(new_shape, dtype_, device_);
+
+    // Odometro de coordenadas y offsets
+    std::vector<uint64_t> coords(ndim, 0);
+    int64_t src_offset = 0;
+
+    if (device_ == Device::CPU){
+
+        DISPATCH_ALL_TYPES(this->dtype_, scalar_t, {
+            // Datos destino y origen
+            const auto* src_ptr = static_cast<scalar_t*>(data_);
+            auto* set_ptr = static_cast<scalar_t*>(t.data_);
+
+            for (uint64_t i = 0; i < t.numel_; i++){
+                set_ptr[i] = src_ptr[src_offset];
+
+                for (int64_t d = ndim -1; d >= 0; --d){
+                    coords[d] += 1;
+                    src_offset += new_strides[d];
+
+                    if (coords[d] < new_shape[d]){
+                        break;
+                    }
+
+                    src_offset -= (coords[d] * new_strides[d]);
+                    coords[d] = 0;
+                }
+            }
+        });
+
+    }else{
+        throw std::runtime_error("Version CUDA no implementada");
+    }
+
+
+    return t;
+}
+
+Tensor Tensor::flatten() const{
+
+    int64_t d = numel_;
+    // Our new tensor is going to have shape (numel, )
+    Tensor t = Tensor({d}, dtype_, device_);
+
+    // Copiamos data en bloque porque es contiguo
+    std::memcpy(t.data_, data_, this->numel_*this->get_element_size(this->dtype_));
+    return t;
+}
+
+
 // --- Operaciones matemáticas pendientes ---

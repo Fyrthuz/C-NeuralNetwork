@@ -97,6 +97,21 @@ int main() {
         std::cout << "-> Excepcion esperada capturada: " << e.what() << "\n";
     }
 
+
+    // 6. Factoría: arange()
+    std::cout << "\n--- TEST 6: Tensor::arange ---";
+    // Genera: [0, 2, 4, 6, 8]
+    std::cout << "Tensor generado" << a << std::endl;
+    std::cout << "Probando clonacion" << std::endl;
+    Tensor b = a.clone();
+    std::cout << "Vector clonado probando flatten..." << b << std::endl;
+    Tensor c = b.flatten();
+    std::cout << "Vector flatteneado" << c << std::endl;
+    Tensor d = t1.transpose(1, 0);
+    std::cout << "Vector transposeado" << d << std::endl;
+    std::cout << "-> PASADO: Clonacion y flatten exitosa.\n";
+
+
     std::cout << "\n==========================================\n";
     std::cout << "   ¡TODAS LAS PRUEBAS FINALIZARON CON EXITO!\n";
     std::cout << "==========================================\n";
