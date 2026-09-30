@@ -1,0 +1,239 @@
+==========================================
+    SUITE DE PRUEBAS - TENSOR ENGINE     
+==========================================
+
+--- TEST 1: Constructor basico y Strides ---
+
+[t1 {2, 3, 4}]
+  - ndim:    3
+  - numel:   24
+  - shape:   [2, 3, 4]
+  - strides: [12, 4, 1]
+  - data:    0x5da35b81f0c0
+  - values: 
+        [[[0,0,0,0],
+          [0,0,0,0],
+          [0,0,0,0]],
+        [[0,0,0,0],
+          [0,0,0,0],
+          [0,0,0,0]]]
+-> PASADO: Dimensiones y strides correctos.
+
+--- TEST 2: Constructor y Asignacion por Copia ---
+
+[t2 (copia de t1)]
+  - ndim:    3
+  - numel:   24
+  - shape:   [2, 3, 4]
+  - strides: [12, 4, 1]
+  - data:    0x5da35b81f480
+  - values: 
+        [[[0,0,0,0],
+          [0,0,0,0],
+          [0,0,0,0]],
+        [[0,0,0,0],
+          [0,0,0,0],
+          [0,0,0,0]]]
+-> PASADO: Copias profundas con buffers independientes.
+
+--- TEST 3: Semantica de Movimiento ---
+-> Move constructor: Buffer transferido y origen reseteado.
+-> PASADO: Semantica de movimiento completada.
+
+--- TEST 4: Tensor::zeros ---
+-> PASADO: Tensor inicializado con ceros.
+
+--- TEST 5: Tensor::ones ---
+-> PASADO: Tensor inicializado con unos.
+
+--- TEST 6: Tensor::arange ---
+Tensor generado:   - ndim:    1
+  - numel:   5
+  - shape:   [5]
+  - strides: [1]
+  - data:    0x5da35b81f6c0
+  - values: 
+        [0,2,4,6,8]
+-> PASADO: Rango secuencial generado con exito.
+
+--- TEST 7: Validacion de Excepciones ---
+-> Excepcion esperada capturada: Pasa una combinacion buena de step, start, end
+-> Excepcion esperada capturada: CUDA no implementado todavía.
+
+--- TEST 8: Clone ---
+Original:   - ndim:    1
+  - numel:   5
+  - shape:   [5]
+  - strides: [1]
+  - data:    0x5da35b81f6c0
+  - values: 
+        [0,2,4,6,8]
+Clonado :   - ndim:    1
+  - numel:   5
+  - shape:   [5]
+  - strides: [1]
+  - data:    0x5da35b81f840
+  - values: 
+        [0,2,4,6,8]
+-> PASADO: Clone correcto.
+
+--- TEST 9: Flatten ---
+Flatten:   - ndim:    1
+  - numel:   5
+  - shape:   [5]
+  - strides: [1]
+  - data:    0x5da35b81f900
+  - values: 
+        [0,2,4,6,8]
+-> PASADO: Flatten correcto.
+
+--- TEST 10: Transpose ---
+t1:
+  - ndim:    3
+  - numel:   24
+  - shape:   [2, 3, 4]
+  - strides: [12, 4, 1]
+  - data:    0x5da35b81f0c0
+  - values: 
+        [[[0,0,0,0],
+          [0,0,0,0],
+          [0,0,0,0]],
+        [[0,0,0,0],
+          [0,0,0,0],
+          [0,0,0,0]]]
+transpose(1, 0):
+  - ndim:    3
+  - numel:   24
+  - shape:   [3, 2, 4]
+  - strides: [8, 4, 1]
+  - data:    0x5da35b81f980
+  - values: 
+        [[[0,0,0,0],
+          [0,0,0,0]],
+        [[0,0,0,0],
+          [0,0,0,0]],
+        [[0,0,0,0],
+          [0,0,0,0]]]
+-> PASADO: Transpose correcto.
+
+--- TEST 11: add() ---
+x          =   - ndim:    1
+  - numel:   4
+  - shape:   [4]
+  - strides: [1]
+  - data:    0x5da35b81fa40
+  - values: 
+        [1,2,3,4]
+y          =   - ndim:    1
+  - numel:   4
+  - shape:   [4]
+  - strides: [1]
+  - data:    0x5da35b81fa80
+  - values: 
+        [1,1,1,1]
+x + y      =   - ndim:    1
+  - numel:   4
+  - shape:   [4]
+  - strides: [1]
+  - data:    0x5da35b81fb80
+  - values: 
+        [2,3,4,5]
+-> PASADO: add() correcto.
+
+--- TEST 12: sub() ---
+x - y      =   - ndim:    1
+  - numel:   4
+  - shape:   [4]
+  - strides: [1]
+  - data:    0x5da35b81fc00
+  - values: 
+        [0,1,2,3]
+-> PASADO: sub() correcto.
+
+--- TEST 13: mult() ---
+x * y      =   - ndim:    1
+  - numel:   4
+  - shape:   [4]
+  - strides: [1]
+  - data:    0x5da35b81fc40
+  - values: 
+        [1,2,3,4]
+-> PASADO: mult() correcto.
+
+--- TEST 14: div() ---
+x / y      =   - ndim:    1
+  - numel:   4
+  - shape:   [4]
+  - strides: [1]
+  - data:    0x5da35b81fcc0
+  - values: 
+        [1,2,3,4]
+-> PASADO: div() correcto.
+
+--- TEST 15: matmul() ---
+A =   - ndim:    2
+  - numel:   6
+  - shape:   [2, 3]
+  - strides: [3, 1]
+  - data:    0x5da35b81fb00
+  - values: 
+        [[1,2,3],
+        [4,5,6]]
+B =   - ndim:    2
+  - numel:   6
+  - shape:   [3, 2]
+  - strides: [2, 1]
+  - data:    0x5da35b81fd00
+  - values: 
+        [[7,8],
+        [9,10],
+        [11,12]]
+A @ B =   - ndim:    2
+  - numel:   4
+  - shape:   [2, 2]
+  - strides: [2, 1]
+  - data:    0x5da35b81fe00
+  - values: 
+        [[58,64],
+        [139,154]]
+-> PASADO: matmul() correcto.
+
+--- TEST 16: Matmul cuadrado ---
+M1 =   - ndim:    2
+  - numel:   4
+  - shape:   [2, 2]
+  - strides: [2, 1]
+  - data:    0x5da35b81fd80
+  - values: 
+        [[1,2],
+        [3,4]]
+M2 =   - ndim:    2
+  - numel:   4
+  - shape:   [2, 2]
+  - strides: [2, 1]
+  - data:    0x5da35b81fe40
+  - values: 
+        [[5,6],
+        [7,8]]
+M1 @ M2 =   - ndim:    2
+  - numel:   4
+  - shape:   [2, 2]
+  - strides: [2, 1]
+  - data:    0x5da35b81ff00
+  - values: 
+        [[19,22],
+        [43,50]]
+-> PASADO: Matmul cuadrado correcto.
+
+--- TEST 17: Matmul incompatible ---
+-> Excepcion esperada capturada: Dimensiones no compatibles para matmul
+
+--- TEST 18: Shapes incompatibles ---
+-> add(): excepcion esperada: Los tensores tienen que tener las mismas dimensiones
+
+--- TEST 19: Dtypes incompatibles ---
+-> add(): excepcion esperada: Los tensores tienen que estar en el mismo tipo de dato
+
+==========================================
+   ¡TODAS LAS PRUEBAS FINALIZARON CON EXITO!
+==========================================
