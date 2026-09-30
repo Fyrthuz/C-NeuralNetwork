@@ -60,6 +60,7 @@ class Tensor{
         static Tensor zeros(const std::vector<int64_t>& shape, DType dtype = DType::F32, Device device = Device::CPU);
         static Tensor ones(const std::vector<int64_t>& shape, DType dtype = DType::F32, Device device = Device::CPU);
         static Tensor arange(int64_t start, int64_t end, int64_t step = 1, DType dtype = DType::F32, Device device = Device::CPU);
+        static Tensor randn(const std::vector<int64_t>& shape, float mean, float std, DType dtype, Device device);
         inline static uint64_t get_element_size(DType dtype){
                 switch (dtype)
                     {
@@ -103,6 +104,8 @@ class Tensor{
 
         // Sobrecarga del operador de inserción en stream (amiga de la clase)
         friend std::ostream& operator<<(std::ostream& os, const Tensor& t);
+
+        ;
 
     
     private:

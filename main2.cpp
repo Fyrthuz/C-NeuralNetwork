@@ -1,115 +1,101 @@
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 #include "lib/tensor.h"
 #include "lib/ops.h"
 #include "lib/linear.h"
 
+// ============================================================
+// Definición del Perceptrón Multicapa para MNIST (784 -> 128 -> 64 -> 10)
+// ============================================================
+class MNISTNet {
+public:
+    LinearLayer fc1;
+    LinearLayer fc2;
+    LinearLayer fc3;
+
+    MNISTNet(Device device = Device::CPU, DType dtype = DType::F32)
+        : fc1(784, 128, device, dtype),
+          fc2(128, 64, device, dtype),
+          fc3(64, 10, device, dtype) {}
+
+    Tensor forward(const Tensor& x) {
+        // x: [Batch, 784]
+        Tensor h1 = fc1.forward(x);
+        Tensor a1 = relu(h1);
+
+        Tensor h2 = fc2.forward(a1);
+        Tensor a2 = relu(h2);
+
+        Tensor logits = fc3.forward(a2);
+        Tensor probs  = softmax(logits); // [Batch, 10]
+
+        return probs;
+    }
+};
 
 int main() {
-
     std::cout << "==========================================\n";
-    std::cout << "       TEST - LINEAR LAYER                \n";
+    std::cout << "       TEST - RED NEURONAL PARA MNIST     \n";
     std::cout << "==========================================\n\n";
 
+    // 1. Instanciar la red neuronal
+    MNISTNet model(Device::CPU, DType::F32);
+    std::cout << "[OK] Modelo MNISTNet instanciado (784 -> 128 -> 64 -> 10)\n";
 
-    // ============================================================
-    // 1. Crear LinearLayer
-    // ============================================================
+    // 2. Simular un lote de entrada (Batch = 2 imágenes de 28x28 aplanadas a 784)
+    const int64_t batch_size = 2;
+    const int64_t in_features = 784;
+    const int64_t num_classes = 10;
 
-    const int64_t in_features = 3;
-    const int64_t out_features = 2;
+    // Generamos entrada simulada normalizada [0, 1]
+    Tensor input = Tensor::randn({batch_size, in_features}, 0.5f, 0.2f, DType::F32, Device::CPU);
+    std::cout << "[OK] Batch de entrada creado con dimensiones: [" 
+              << input.shape()[0] << ", " << input.shape()[1] << "]\n";
 
-    LinearLayer layer(
-        in_features,
-        out_features,
-        Device::CPU,
-        DType::F32
-    );
+    // 3. Ejecutar el Forward Pass completo
+    Tensor probs = model.forward(input);
+    std::cout << "[OK] Forward pass completado con exito\n";
 
-    std::cout << "[OK] LinearLayer creado\n";
+    // 4. Validaciones de dimensiones y número de elementos
+    assert(probs.shape().size() == 2);
+    assert(probs.shape()[0] == batch_size);
+    assert(probs.shape()[1] == num_classes);
+    assert(probs.numel() == static_cast<uint64_t>(batch_size * num_classes));
+    std::cout << "[OK] Output shape correcta: [" << probs.shape()[0] << ", " << probs.shape()[1] << "]\n";
 
+    // 5. Verificar propiedades de Softmax (la suma de cada fila debe ser ~1.0)
+    const float* probs_ptr = probs.data_ptr<float>();
 
-    // ============================================================
-    // 2. Crear input
-    // ============================================================
+    for (int64_t b = 0; b < batch_size; ++b) {
+        float sum = 0.0f;
+        int best_digit = 0;
+        float max_prob = -1.0f;
 
-    // Batch de 2 muestras
-    //
-    // [1, 2, 3]
-    // [4, 5, 6]
-    //
-    // Shape = [2, 3]
+        for (int64_t c = 0; c < num_classes; ++c) {
+            float p = probs_ptr[b * num_classes + c];
+            sum += p;
+            if (p > max_prob) {
+                max_prob = p;
+                best_digit = c;
+            }
+        }
 
-    Tensor input(
-        {2, 3},
-        DType::F32,
-        Device::CPU
-    );
+        std::cout << "Muestra #" << b 
+                  << " -> Prediccion inicial (sin entrenar): digito " << best_digit 
+                  << " con probabilidad: " << max_prob * 100.0f << "%\n";
 
-    float* input_ptr = static_cast<float*>(input.data());
+        // La suma de probabilidades debe estar extremadamente cerca de 1.0f
+        assert(std::fabs(sum - 1.0f) < 1e-4f);
+    }
+    std::cout << "[OK] Validacion Softmax: las probabilidades de cada muestra suman 1.0\n";
 
-    input_ptr[0] = 1.0f;
-    input_ptr[1] = 2.0f;
-    input_ptr[2] = 3.0f;
+    // 6. Visualizar las probabilidades de la primera muestra
+    std::cout << "\nProbabilidades del primer digito:\n" << probs << "\n";
 
-    input_ptr[3] = 4.0f;
-    input_ptr[4] = 5.0f;
-    input_ptr[5] = 6.0f;
-
-
-    std::cout << "[OK] Input creado\n";
-
-    std::cout << "Input:\n";
-    std::cout << input << "\n\n";
-
-
-    // ============================================================
-    // 3. Forward
-    // ============================================================
-
-    Tensor output = layer.forward(input);
-
-    std::cout << "[OK] Forward ejecutado\n";
-
-
-    // ============================================================
-    // 4. Comprobar shape
-    // ============================================================
-
-    assert(output.shape().size() == 2);
-
-    assert(output.shape()[0] == 2);
-    assert(output.shape()[1] == 2);
-
-    std::cout << "[OK] Output shape correcta: [2, 2]\n";
-
-
-    // ============================================================
-    // 5. Mostrar output
-    // ============================================================
-
-    std::cout << "\nOutput:\n";
-    std::cout << output << "\n";
-
-
-    // ============================================================
-    // 6. Comprobar numel
-    // ============================================================
-
-    assert(output.numel() == 4);
-
-    std::cout << "\n[OK] Output numel = "
-              << output.numel()
-              << "\n";
-
-
-    // ============================================================
-    // Resultado
-    // ============================================================
-
-    std::cout << "\n==========================================\n";
-    std::cout << "       TODOS LOS TESTS PASARON            \n";
+    std::cout << "==========================================\n";
+    std::cout << "       TEST DE INFERENCIA EXITOSO         \n";
     std::cout << "==========================================\n";
 
     return 0;

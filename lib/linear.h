@@ -19,4 +19,21 @@ private:
     Tensor bias;
 };
 
+
+class ReLU{
+   public:
+    ReLU() = default;
+    Tensor forward(const Tensor& input);
+
+    private:
+};
+
+
+class SoftMax{
+public:
+    SoftMax() = default;
+    Tensor forward(const Tensor& input);
+private:
+};
+
 #endif

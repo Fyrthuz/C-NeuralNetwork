@@ -11,6 +11,23 @@
 #include "lib/ops.h"
 
 
+// ============================================================
+// UTILIDADES PARA TESTS
+// ============================================================
+
+static bool almost_equal(
+    float a,
+    float b,
+    float epsilon = 1e-5f
+) {
+    return std::fabs(a - b) <= epsilon;
+}
+
+
+// ============================================================
+// MAIN
+// ============================================================
+
 int main() {
 
     std::cout << "==========================================\n";
@@ -122,7 +139,7 @@ int main() {
     auto* o_ptr = static_cast<float*>(o.data());
 
     for (uint64_t i = 0; i < o.numel(); ++i) {
-        assert(o_ptr[i] == 1.0f);
+        assert(almost_equal(o_ptr[i], 1.0f));
     }
 
     std::cout << "-> PASADO: Tensor inicializado con unos.\n";
@@ -289,10 +306,10 @@ int main() {
     auto* add_ptr =
         static_cast<float*>(add_result.data());
 
-    assert(add_ptr[0] == 2.0f);
-    assert(add_ptr[1] == 3.0f);
-    assert(add_ptr[2] == 4.0f);
-    assert(add_ptr[3] == 5.0f);
+    assert(almost_equal(add_ptr[0], 2.0f));
+    assert(almost_equal(add_ptr[1], 3.0f));
+    assert(almost_equal(add_ptr[2], 4.0f));
+    assert(almost_equal(add_ptr[3], 5.0f));
 
     std::cout << "-> PASADO: add() correcto.\n";
 
@@ -310,10 +327,10 @@ int main() {
     auto* sub_ptr =
         static_cast<float*>(sub_result.data());
 
-    assert(sub_ptr[0] == 0.0f);
-    assert(sub_ptr[1] == 1.0f);
-    assert(sub_ptr[2] == 2.0f);
-    assert(sub_ptr[3] == 3.0f);
+    assert(almost_equal(sub_ptr[0], 0.0f));
+    assert(almost_equal(sub_ptr[1], 1.0f));
+    assert(almost_equal(sub_ptr[2], 2.0f));
+    assert(almost_equal(sub_ptr[3], 3.0f));
 
     std::cout << "-> PASADO: sub() correcto.\n";
 
@@ -331,10 +348,10 @@ int main() {
     auto* mult_ptr =
         static_cast<float*>(mult_result.data());
 
-    assert(mult_ptr[0] == 1.0f);
-    assert(mult_ptr[1] == 2.0f);
-    assert(mult_ptr[2] == 3.0f);
-    assert(mult_ptr[3] == 4.0f);
+    assert(almost_equal(mult_ptr[0], 1.0f));
+    assert(almost_equal(mult_ptr[1], 2.0f));
+    assert(almost_equal(mult_ptr[2], 3.0f));
+    assert(almost_equal(mult_ptr[3], 4.0f));
 
     std::cout << "-> PASADO: mult() correcto.\n";
 
@@ -352,10 +369,10 @@ int main() {
     auto* div_ptr =
         static_cast<float*>(div_result.data());
 
-    assert(div_ptr[0] == 1.0f);
-    assert(div_ptr[1] == 2.0f);
-    assert(div_ptr[2] == 3.0f);
-    assert(div_ptr[3] == 4.0f);
+    assert(almost_equal(div_ptr[0], 1.0f));
+    assert(almost_equal(div_ptr[1], 2.0f));
+    assert(almost_equal(div_ptr[2], 3.0f));
+    assert(almost_equal(div_ptr[3], 4.0f));
 
     std::cout << "-> PASADO: div() correcto.\n";
 
@@ -445,11 +462,11 @@ int main() {
         static_cast<float*>(C.data());
 
 
-    assert(C_ptr[0] == 58.0f);
-    assert(C_ptr[1] == 64.0f);
+    assert(almost_equal(C_ptr[0], 58.0f));
+    assert(almost_equal(C_ptr[1], 64.0f));
 
-    assert(C_ptr[2] == 139.0f);
-    assert(C_ptr[3] == 154.0f);
+    assert(almost_equal(C_ptr[2], 139.0f));
+    assert(almost_equal(C_ptr[3], 154.0f));
 
 
     std::cout << "-> PASADO: matmul() correcto.\n";
@@ -504,7 +521,6 @@ int main() {
     auto* M3_ptr =
         static_cast<float*>(M3.data());
 
-
     /*
         Resultado:
 
@@ -512,10 +528,10 @@ int main() {
         [43 50]
     */
 
-    assert(M3_ptr[0] == 19.0f);
-    assert(M3_ptr[1] == 22.0f);
-    assert(M3_ptr[2] == 43.0f);
-    assert(M3_ptr[3] == 50.0f);
+    assert(almost_equal(M3_ptr[0], 19.0f));
+    assert(almost_equal(M3_ptr[1], 22.0f));
+    assert(almost_equal(M3_ptr[2], 43.0f));
+    assert(almost_equal(M3_ptr[3], 50.0f));
 
 
     std::cout << "-> PASADO: Matmul cuadrado correcto.\n";
@@ -606,6 +622,533 @@ int main() {
 
 
     // ============================================================
+    // BROADCASTING
+    // ============================================================
+
+
+    // ============================================================
+    // TEST 20 - Broadcasting [2,3] + [3]
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 20: Broadcasting [2,3] + [3] ---\n";
+
+    /*
+        x =
+        [1 2 3]
+        [4 5 6]
+
+        y =
+        [10 20 30]
+
+        Resultado:
+
+        [11 22 33]
+        [14 25 36]
+    */
+
+    Tensor bx({2, 3}, DType::F32, Device::CPU);
+    Tensor by({3}, DType::F32, Device::CPU);
+
+    auto* bx_ptr =
+        bx.data_ptr<float>();
+
+    auto* by_ptr =
+        by.data_ptr<float>();
+
+
+    bx_ptr[0] = 1.0f;
+    bx_ptr[1] = 2.0f;
+    bx_ptr[2] = 3.0f;
+
+    bx_ptr[3] = 4.0f;
+    bx_ptr[4] = 5.0f;
+    bx_ptr[5] = 6.0f;
+
+
+    by_ptr[0] = 10.0f;
+    by_ptr[1] = 20.0f;
+    by_ptr[2] = 30.0f;
+
+
+    Tensor broadcast_add =
+        add(bx, by);
+
+    std::cout
+        << "bx              = "
+        << bx
+        << std::endl;
+
+    std::cout
+        << "by              = "
+        << by
+        << std::endl;
+
+    std::cout
+        << "bx + by         = "
+        << broadcast_add
+        << std::endl;
+
+
+    assert(
+        broadcast_add.shape() ==
+        std::vector<int64_t>({2, 3})
+    );
+
+
+    auto* broadcast_add_ptr =
+        broadcast_add.data_ptr<float>();
+
+
+    assert(almost_equal(
+        broadcast_add_ptr[0], 11.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add_ptr[1], 22.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add_ptr[2], 33.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add_ptr[3], 14.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add_ptr[4], 25.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add_ptr[5], 36.0f
+    ));
+
+
+    std::cout
+        << "-> PASADO: Broadcasting [2,3] + [3].\n";
+
+
+    // ============================================================
+    // TEST 21 - Broadcasting [2,3] + [2,1]
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 21: Broadcasting [2,3] + [2,1] ---\n";
+
+    /*
+        x =
+        [1 2 3]
+        [4 5 6]
+
+        y =
+        [10]
+        [20]
+
+        Resultado:
+
+        [11 12 13]
+        [24 25 26]
+    */
+
+    Tensor bx2({2, 3}, DType::F32, Device::CPU);
+    Tensor by2({2, 1}, DType::F32, Device::CPU);
+
+    auto* bx2_ptr =
+        bx2.data_ptr<float>();
+
+    auto* by2_ptr =
+        by2.data_ptr<float>();
+
+
+    bx2_ptr[0] = 1.0f;
+    bx2_ptr[1] = 2.0f;
+    bx2_ptr[2] = 3.0f;
+
+    bx2_ptr[3] = 4.0f;
+    bx2_ptr[4] = 5.0f;
+    bx2_ptr[5] = 6.0f;
+
+
+    by2_ptr[0] = 10.0f;
+    by2_ptr[1] = 20.0f;
+
+
+    Tensor broadcast_add2 =
+        add(bx2, by2);
+
+    std::cout
+        << "bx2             = "
+        << bx2
+        << std::endl;
+
+    std::cout
+        << "by2             = "
+        << by2
+        << std::endl;
+
+    std::cout
+        << "bx2 + by2       = "
+        << broadcast_add2
+        << std::endl;
+
+
+    assert(
+        broadcast_add2.shape() ==
+        std::vector<int64_t>({2, 3})
+    );
+
+
+    auto* broadcast_add2_ptr =
+        broadcast_add2.data_ptr<float>();
+
+
+    assert(almost_equal(
+        broadcast_add2_ptr[0], 11.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add2_ptr[1], 12.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add2_ptr[2], 13.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add2_ptr[3], 24.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add2_ptr[4], 25.0f
+    ));
+
+    assert(almost_equal(
+        broadcast_add2_ptr[5], 26.0f
+    ));
+
+
+    std::cout
+        << "-> PASADO: Broadcasting [2,3] + [2,1].\n";
+
+
+    // ============================================================
+    // TEST 22 - Broadcasting [2,3] - [3]
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 22: Broadcasting [2,3] - [3] ---\n";
+
+    /*
+        x =
+        [1 2 3]
+        [4 5 6]
+
+        y =
+        [10 20 30]
+
+        Resultado:
+
+        [-9 -18 -27]
+        [-6 -15 -24]
+    */
+
+    Tensor sub_broadcast =
+        sub(bx, by);
+
+    std::cout
+        << "bx - by         = "
+        << sub_broadcast
+        << std::endl;
+
+
+    assert(
+        sub_broadcast.shape() ==
+        std::vector<int64_t>({2, 3})
+    );
+
+
+    const float* sub_broadcast_ptr =
+        sub_broadcast.data_ptr<float>();
+
+
+    assert(almost_equal(
+        sub_broadcast_ptr[0], -9.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast_ptr[1], -18.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast_ptr[2], -27.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast_ptr[3], -6.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast_ptr[4], -15.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast_ptr[5], -24.0f
+    ));
+
+
+    std::cout
+        << "-> PASADO: Broadcasting [2,3] - [3].\n";
+
+
+    // ============================================================
+    // TEST 23 - Broadcasting [2,3] - [2,1]
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 23: Broadcasting [2,3] - [2,1] ---\n";
+
+    /*
+        x =
+        [1 2 3]
+        [4 5 6]
+
+        y =
+        [10]
+        [20]
+
+        Resultado:
+
+        [-9 -8 -7]
+        [-16 -15 -14]
+    */
+
+    Tensor sub_broadcast2 =
+        sub(bx2, by2);
+
+    std::cout
+        << "bx2 - by2       = "
+        << sub_broadcast2
+        << std::endl;
+
+
+    assert(
+        sub_broadcast2.shape() ==
+        std::vector<int64_t>({2, 3})
+    );
+
+
+    const float* sub_broadcast2_ptr =
+        sub_broadcast2.data_ptr<float>();
+
+
+    assert(almost_equal(
+        sub_broadcast2_ptr[0], -9.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast2_ptr[1], -8.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast2_ptr[2], -7.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast2_ptr[3], -16.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast2_ptr[4], -15.0f
+    ));
+
+    assert(almost_equal(
+        sub_broadcast2_ptr[5], -14.0f
+    ));
+
+
+    std::cout
+        << "-> PASADO: Broadcasting [2,3] - [2,1].\n";
+
+
+    // ============================================================
+    // TEST 24 - Broadcasting [2,3] * [3]
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 24: Broadcasting [2,3] * [3] ---\n";
+
+    /*
+        x =
+        [1 2 3]
+        [4 5 6]
+
+        y =
+        [10 20 30]
+
+        Resultado:
+
+        [10 40 90]
+        [40 100 180]
+    */
+
+    Tensor mult_broadcast =
+        mult(bx, by);
+
+    std::cout
+        << "bx * by         = "
+        << mult_broadcast
+        << std::endl;
+
+
+    assert(
+        mult_broadcast.shape() ==
+        std::vector<int64_t>({2, 3})
+    );
+
+
+    const float* mult_broadcast_ptr =
+        mult_broadcast.data_ptr<float>();
+
+
+    assert(almost_equal(
+        mult_broadcast_ptr[0], 10.0f
+    ));
+
+    assert(almost_equal(
+        mult_broadcast_ptr[1], 40.0f
+    ));
+
+    assert(almost_equal(
+        mult_broadcast_ptr[2], 90.0f
+    ));
+
+    assert(almost_equal(
+        mult_broadcast_ptr[3], 40.0f
+    ));
+
+    assert(almost_equal(
+        mult_broadcast_ptr[4], 100.0f
+    ));
+
+    assert(almost_equal(
+        mult_broadcast_ptr[5], 180.0f
+    ));
+
+
+    std::cout
+        << "-> PASADO: Broadcasting [2,3] * [3].\n";
+
+
+    // ============================================================
+    // TEST 25 - Broadcasting [2,3] / [2,1]
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 25: Broadcasting [2,3] / [2,1] ---\n";
+
+    /*
+        x =
+        [1 2 3]
+        [4 5 6]
+
+        y =
+        [10]
+        [20]
+
+        Resultado:
+
+        [0.1  0.2  0.3]
+        [0.2  0.25 0.3]
+    */
+
+    Tensor div_broadcast =
+        div(bx2, by2);
+
+    std::cout
+        << "bx2 / by2       = "
+        << div_broadcast
+        << std::endl;
+
+
+    assert(
+        div_broadcast.shape() ==
+        std::vector<int64_t>({2, 3})
+    );
+
+
+    const float* div_broadcast_ptr =
+        div_broadcast.data_ptr<float>();
+
+
+    assert(almost_equal(
+        div_broadcast_ptr[0], 0.1f
+    ));
+
+    assert(almost_equal(
+        div_broadcast_ptr[1], 0.2f
+    ));
+
+    assert(almost_equal(
+        div_broadcast_ptr[2], 0.3f
+    ));
+
+    assert(almost_equal(
+        div_broadcast_ptr[3], 0.2f
+    ));
+
+    assert(almost_equal(
+        div_broadcast_ptr[4], 0.25f
+    ));
+
+    assert(almost_equal(
+        div_broadcast_ptr[5], 0.3f
+    ));
+
+
+    std::cout
+        << "-> PASADO: Broadcasting [2,3] / [2,1].\n";
+
+
+    // ============================================================
+    // TEST 26 - Broadcasting incompatible
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 26: Broadcasting incompatible ---\n";
+
+    Tensor incompatible_a(
+        {2, 3},
+        DType::F32,
+        Device::CPU
+    );
+
+    Tensor incompatible_b(
+        {2, 2},
+        DType::F32,
+        Device::CPU
+    );
+
+    try {
+
+        Tensor invalid =
+            add(incompatible_a, incompatible_b);
+
+        // Si llegamos aquí, el broadcasting
+        // ha aceptado incorrectamente las shapes.
+
+        assert(false);
+
+    } catch (const std::invalid_argument& e) {
+
+        std::cout
+            << "-> Excepcion esperada capturada: "
+            << e.what()
+            << "\n";
+    }
+
+
+    // ============================================================
     // FIN
     // ============================================================
 
@@ -613,7 +1156,7 @@ int main() {
         << "\n==========================================\n";
 
     std::cout
-        << "   ¡TODAS LAS PRUEBAS FINALIZARON CON EXITO!\n";
+        << "   TODAS LAS PRUEBAS FINALIZARON CON EXITO!\n";
 
     std::cout
         << "==========================================\n";

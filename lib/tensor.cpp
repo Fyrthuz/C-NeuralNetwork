@@ -3,6 +3,7 @@
 #include <cstring>
 #include <utility>
 #include <cmath>
+#include <random>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
@@ -391,5 +392,25 @@ Tensor Tensor::flatten() const{
     return t;
 }
 
+// Inicializacion de pesos
+Tensor Tensor::randn(const std::vector<int64_t>& shape, float mean, float std, DType dtype, Device device) {
+    if (device != Device::CPU) {
+        throw std::invalid_argument("CUDA no soportado");
+    }
 
-// --- Operaciones matemáticas pendientes ---
+    Tensor t(shape, dtype, device);
+
+    // Generador aleatorio estándar en C++
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::normal_distribution<float> dist(mean, std);
+
+    DISPATCH_ALL_TYPES(dtype, scalar_t, {
+        scalar_t* ptr = t.data_ptr<scalar_t>();
+        for (uint64_t i = 0; i < t.numel(); ++i) {
+            ptr[i] = static_cast<scalar_t>(dist(gen));
+        }
+    });
+
+    return t;
+}
