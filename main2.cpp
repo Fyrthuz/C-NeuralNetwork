@@ -50,7 +50,6 @@ int main() {
     const int64_t in_features = 784;
     const int64_t num_classes = 10;
 
-    // Generamos entrada simulada normalizada [0, 1]
     Tensor input = Tensor::randn({batch_size, in_features}, 0.5f, 0.2f, DType::F32, Device::CPU);
     std::cout << "[OK] Batch de entrada creado con dimensiones: [" 
               << input.shape()[0] << ", " << input.shape()[1] << "]\n";
@@ -59,16 +58,15 @@ int main() {
     Tensor probs = model.forward(input);
     std::cout << "[OK] Forward pass completado con exito\n";
 
-    // 4. Validaciones de dimensiones y número de elementos
+    // 4. Validaciones de dimensiones
     assert(probs.shape().size() == 2);
     assert(probs.shape()[0] == batch_size);
     assert(probs.shape()[1] == num_classes);
     assert(probs.numel() == static_cast<uint64_t>(batch_size * num_classes));
     std::cout << "[OK] Output shape correcta: [" << probs.shape()[0] << ", " << probs.shape()[1] << "]\n";
 
-    // 5. Verificar propiedades de Softmax (la suma de cada fila debe ser ~1.0)
+    // 5. Verificar propiedades de Softmax
     const float* probs_ptr = probs.data_ptr<float>();
-
     for (int64_t b = 0; b < batch_size; ++b) {
         float sum = 0.0f;
         int best_digit = 0;
@@ -84,52 +82,59 @@ int main() {
         }
 
         std::cout << "Muestra #" << b 
-                  << " -> Prediccion inicial (sin entrenar): digito " << best_digit 
+                  << " -> Prediccion inicial: digito " << best_digit 
                   << " con probabilidad: " << max_prob * 100.0f << "%\n";
 
-        // La suma de probabilidades debe estar extremadamente cerca de 1.0f
         assert(std::fabs(sum - 1.0f) < 1e-4f);
     }
-    std::cout << "[OK] Validacion Softmax: las probabilidades de cada muestra suman 1.0\n";
-
-    // 6. Visualizar las probabilidades de la primera muestra
-    std::cout << "\nProbabilidades del primer digito:\n" << probs << "\n";
-
+    std::cout << "[OK] Validacion Softmax: probabilidades suman 1.0\n";
 
     // ============================================================
-    // 7. Prueba de Cross Entropy Loss
+    // 6. Prueba conjunta de Cross Entropy Loss + Gradiente
     // ============================================================
-    std::cout << "\n--- TEST: Calculo de Cross Entropy Loss ---\n";
+    std::cout << "\n--- TEST: Cross Entropy Loss y Gradiente (dL/dz) ---\n";
 
-    // Creamos ground truth en formato One-Hot con la misma shape que probs: [2, 10]
-    // Supongamos que:
-    //  - Muestra 0 es el dígito 3  -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
-    //  - Muestra 1 es el dígito 7  -> [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
-    Tensor gt = Tensor::zeros({2, 10}, DType::F32, Device::CPU);
+    Tensor gt = Tensor::zeros({batch_size, num_classes}, DType::F32, Device::CPU);
     float* gt_ptr = gt.data_ptr<float>();
 
-    // Muestra 0: índice 3
-    gt_ptr[0 * 10 + 3] = 1.0f;
-    // Muestra 1: índice 7
-    gt_ptr[1 * 10 + 7] = 1.0f;
+    // Muestra 0: dígito 3 | Muestra 1: dígito 7
+    gt_ptr[0 * num_classes + 3] = 1.0f;
+    gt_ptr[1 * num_classes + 7] = 1.0f;
 
-    std::cout << "Ground Truth One-Hot:\n" << gt << "\n";
+    // Llamada con structured binding a la función unificada
+    auto [loss, d_logits] = cross_entropy(probs, gt, Device::CPU, DType::F32);
 
-    // Calculamos la pérdida
-    Tensor loss = cross_entropy(probs, gt, Device::CPU, DType::F32);
+    std::cout << "[OK] Perdida y gradientes calculados en una sola pasada\n";
 
-    std::cout << "[OK] Perdida calculada con exito\n";
-    std::cout << "Loss tensor: " << loss << "\n";
-    std::cout << "Loss scalar: " << loss.data_ptr<float>()[0] << "\n";
-
-    // Con 10 clases no entrenadas (probabilidad inicial ~0.10),
-    // la pérdida teórica esperada es -ln(0.1) ≈ 2.302
+    // Validar Loss (escalar de 1 elemento)
+    assert(loss.shape().size() == 1 && loss.shape()[0] == 1);
     float loss_val = loss.data_ptr<float>()[0];
-    assert(loss_val > 0.0f);
-    assert(!std::isnan(loss_val) && !std::isinf(loss_val));
+    std::cout << "Loss scalar: " << loss_val << "\n";
+    assert(loss_val > 0.0f && !std::isnan(loss_val) && !std::isinf(loss_val));
 
-    std::cout << "\n==========================================\n";
-    std::cout << "       TEST DE INFERENCIA EXITOSO         \n";
+    // Validar d_logits (mismas dimensiones que probs: [2, 10])
+    assert(d_logits.shape().size() == 2);
+    assert(d_logits.shape()[0] == batch_size);
+    assert(d_logits.shape()[1] == num_classes);
+    std::cout << "[OK] Gradiente d_logits con dimensiones correctas: ["
+              << d_logits.shape()[0] << ", " << d_logits.shape()[1] << "]\n";
+
+    // La suma de los gradientes de una muestra sobre todas las clases debe ser ~0
+    // porque sum(P - Y) = sum(P) - sum(Y) = 1.0 - 1.0 = 0.0
+    const float* grad_ptr = d_logits.data_ptr<float>();
+    for (int64_t b = 0; b < batch_size; ++b) {
+        float grad_sum = 0.0f;
+        for (int64_t c = 0; c < num_classes; ++c) {
+            grad_sum += grad_ptr[b * num_classes + c];
+        }
+        assert(std::fabs(grad_sum) < 1e-4f);
+    }
+    std::cout << "[OK] Propiedad analitica de d_logits verificada: sum(grad) == 0 por muestra\n";
+
+    std::cout << "\nGradiente d_logits generado:\n" << d_logits << "\n";
+
+    std::cout << "==========================================\n";
+    std::cout << "       TODOS LOS TESTS PASARON            \n";
     std::cout << "==========================================\n";
 
     return 0;

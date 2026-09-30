@@ -3,6 +3,12 @@
 
 #include "tensor.h"
 
-Tensor cross_entropy(Tensor output, Tensor ground_truth, Device device, DType dtype);
+struct LossResult {
+    Tensor loss;
+    Tensor grad;
+};
+
+
+LossResult cross_entropy(Tensor output, Tensor ground_truth, Device device, DType dtype);
 
 #endif
