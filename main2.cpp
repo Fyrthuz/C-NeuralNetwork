@@ -5,6 +5,7 @@
 #include "lib/tensor.h"
 #include "lib/ops.h"
 #include "lib/linear.h"
+#include "lib/loss.h"
 
 // ============================================================
 // Definición del Perceptrón Multicapa para MNIST (784 -> 128 -> 64 -> 10)
@@ -94,7 +95,40 @@ int main() {
     // 6. Visualizar las probabilidades de la primera muestra
     std::cout << "\nProbabilidades del primer digito:\n" << probs << "\n";
 
-    std::cout << "==========================================\n";
+
+    // ============================================================
+    // 7. Prueba de Cross Entropy Loss
+    // ============================================================
+    std::cout << "\n--- TEST: Calculo de Cross Entropy Loss ---\n";
+
+    // Creamos ground truth en formato One-Hot con la misma shape que probs: [2, 10]
+    // Supongamos que:
+    //  - Muestra 0 es el dígito 3  -> [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+    //  - Muestra 1 es el dígito 7  -> [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+    Tensor gt = Tensor::zeros({2, 10}, DType::F32, Device::CPU);
+    float* gt_ptr = gt.data_ptr<float>();
+
+    // Muestra 0: índice 3
+    gt_ptr[0 * 10 + 3] = 1.0f;
+    // Muestra 1: índice 7
+    gt_ptr[1 * 10 + 7] = 1.0f;
+
+    std::cout << "Ground Truth One-Hot:\n" << gt << "\n";
+
+    // Calculamos la pérdida
+    Tensor loss = cross_entropy(probs, gt, Device::CPU, DType::F32);
+
+    std::cout << "[OK] Perdida calculada con exito\n";
+    std::cout << "Loss tensor: " << loss << "\n";
+    std::cout << "Loss scalar: " << loss.data_ptr<float>()[0] << "\n";
+
+    // Con 10 clases no entrenadas (probabilidad inicial ~0.10),
+    // la pérdida teórica esperada es -ln(0.1) ≈ 2.302
+    float loss_val = loss.data_ptr<float>()[0];
+    assert(loss_val > 0.0f);
+    assert(!std::isnan(loss_val) && !std::isinf(loss_val));
+
+    std::cout << "\n==========================================\n";
     std::cout << "       TEST DE INFERENCIA EXITOSO         \n";
     std::cout << "==========================================\n";
 
