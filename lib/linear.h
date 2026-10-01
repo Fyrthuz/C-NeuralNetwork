@@ -14,18 +14,27 @@ public:
 
     Tensor forward(const Tensor& input);
 
-private:
+    Tensor backward(const Tensor& d_output);
     Tensor weights;
     Tensor bias;
+    Tensor input_cache;
+    Tensor d_weights;
+    Tensor d_bias;
+
+private:
+    
 };
 
 
 class ReLU{
-   public:
+public:
     ReLU() = default;
     Tensor forward(const Tensor& input);
+    Tensor backward(const Tensor& d_output);
+    Tensor input_cache;
 
-    private:
+private:
+
 };
 
 
@@ -33,6 +42,7 @@ class SoftMax{
 public:
     SoftMax() = default;
     Tensor forward(const Tensor& input);
+    
 private:
 };
 
