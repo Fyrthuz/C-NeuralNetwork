@@ -7,21 +7,32 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <cuda_runtime.h>
+#include "kernel_operations.h"
 
 
 void* allocate_memory(uint64_t size_per_item, uint64_t items, Device device){
     void * data{nullptr};
     uint64_t total_bytes = size_per_item * items;
+
+
     if (items != 0 && total_bytes / items != size_per_item) {
         throw std::overflow_error("Desbordamiento al calcular el tamaño de memoria.");
+    }
+
+    if (total_bytes == 0) {
+        return nullptr;
     }
 
     if(device == Device::CPU){
         
         data = ::operator new(size_per_item * items, std::align_val_t{64});
     }else{
-        /* IMPLEMENTACION PARA CUDA, PENDIENTE */
-        throw std::runtime_error("CUDA no implementado todavía.");
+        cudaError_t cudaError = cudaMalloc(&data, total_bytes);
+
+        if ( cudaError != cudaSuccess ){
+            throw std::runtime_error(std::string("Error al reservar memoria en GPU: ") + cudaGetErrorString(cudaError));    
+        }
     }
     return data;
 
@@ -33,7 +44,10 @@ void free_memory(void*& data, Device device){
             ::operator delete(data, std::align_val_t{64});
         } else if (device == Device::CUDA) {
             /* IMPLEMENTACION PARA CUDA, PENDIENTE */
-            throw std::runtime_error("CUDA no implementado todavía.");
+            cudaError_t cudaError = cudaFree(data);
+            if ( cudaError != cudaSuccess ){
+                throw std::runtime_error(std::string("Error al liberar memoria en GPU: ") + cudaGetErrorString(cudaError));    
+            }
         }
         data = nullptr;
     }
@@ -100,8 +114,11 @@ Tensor::Tensor(const Tensor& other)
         if (device_ == Device::CPU){
             std::memcpy(this->data_, other.data_, this->numel_*this->get_element_size(this->dtype_));
         }else{
-            /* IMPLEMENTACION PARA CUDA, PENDIENTE */
-            throw std::runtime_error("CUDA no implementado todavía.");
+            size_t bytes = this->numel_ * this->get_element_size(this->dtype_);
+            cudaError_t err = cudaMemcpy(this->data_, other.data_, bytes, cudaMemcpyDeviceToDevice);
+            if (err != cudaSuccess) {
+                throw std::runtime_error(std::string("Error en cudaMemcpy (copia): ") + cudaGetErrorString(err));
+            }
         }
     }
 
@@ -167,7 +184,10 @@ Tensor Tensor::zeros(const std::vector<int64_t>& shape, DType dtype, Device devi
         if(device == Device::CPU){
             std::memset(t.data(), 0, t.numel() * t.get_element_size(dtype));
         }else{
-            throw std::runtime_error("CUDA no implementado todavía.");
+            cudaError_t cudaError = cudaMemset(t.data(), 0, t.numel() * t.get_element_size(dtype));
+            if (cudaError != cudaSuccess){
+                throw std::runtime_error(std::string("Error al asignar a valores a un array en la GPU: ") + cudaGetErrorString(cudaError));
+            }
         }
     }
     return t;
@@ -187,7 +207,7 @@ Tensor Tensor::ones(const std::vector<int64_t>& shape, DType dtype, Device devic
             }
         });
     } else{
-        throw std::runtime_error("CUDA no implementado todavía.");
+        cuda_fill(t.data_, 1.0f, t.numel(), dtype);
     }
     return t;
 }
@@ -204,7 +224,7 @@ Tensor Tensor::arange(int64_t start, int64_t end, int64_t step, DType dtype, Dev
     }
 
     // Calculamos tamaño del tensor
-    int64_t size = static_cast<int64_t>((std::abs(diff)+std::abs(step)-1)/abs(step));
+    int64_t size = static_cast<int64_t>((std::abs(diff)+std::abs(step)-1)/std::abs(step));
 
     // Instanciamos el tensor
     Tensor t({size}, dtype, device);
@@ -223,7 +243,7 @@ Tensor Tensor::arange(int64_t start, int64_t end, int64_t step, DType dtype, Dev
         });
 
     }else{
-        throw std::runtime_error("CUDA no implementado todavía.");
+        cuda_arange(t.data_, start, step, size, dtype);
     }
     return t;
 }
@@ -248,25 +268,20 @@ static void print_scalar(std::ostream& os, const void * data, int64_t flat_idx, 
 
 
 
-static void print_tensor_data(std::ostream& os, const Tensor& t, size_t dim, int64_t offset, int indent){
-
-    // Caso base, llegamos a la ultima dimension y printeamos los escalares
-    if (dim == t.shape().size()-1){
+static void print_tensor_data(std::ostream& os, const void* base_ptr, const Tensor& t, size_t dim, int64_t offset, int indent) {
+    if (dim == t.shape().size() - 1) {
         os << "[";
-        for (int64_t i = 0; i < t.shape()[dim]; ++i){
-            print_scalar(os, t.data(), offset + i * t.strides()[dim], t.dtype());
-            if (i+1 < t.shape()[dim]){
-                os << ",";
-            }
+        for (int64_t i = 0; i < t.shape()[dim]; ++i) {
+            print_scalar(os, base_ptr, offset + i * t.strides()[dim], t.dtype());
+            if (i + 1 < t.shape()[dim]) os << ", ";
         }
-
         os << "]";
         return;
     }
 
     os << "[";
-    for (int64_t i = 0; i < t.shape()[dim]; ++i){
-        print_tensor_data(os, t, dim + 1, offset + i * t.strides()[dim], indent + 2);
+    for (int64_t i = 0; i < t.shape()[dim]; ++i) {
+        print_tensor_data(os, base_ptr, t, dim + 1, offset + i * t.strides()[dim], indent + 2);
         if (i + 1 < t.shape()[dim]) {
             os << ",\n" << std::string(indent, ' ');
         }
@@ -294,16 +309,27 @@ std::ostream& operator<<(std::ostream& os, const Tensor& t) {
         return os;
     }
 
-    if (t.device_ != Device::CPU) {
-        os << "]";
-        return os;
+    const void* print_ptr = t.data_;
+    std::vector<char> cpu_buffer;
+
+    if (t.device_ == Device::CUDA) {
+        // Hacemos una copia a la CPU
+        size_t bytes = t.numel() * t.get_element_size(t.dtype());
+        cpu_buffer.resize(bytes);
+        cudaError_t err = cudaMemcpy(cpu_buffer.data(), t.data_, bytes, cudaMemcpyDeviceToHost);
+        if (err != cudaSuccess) {
+            os << "[Error CUDA en print: " << cudaGetErrorString(err) << "]";
+            return os;
+        }
+        print_ptr = cpu_buffer.data();
     }
+
     os << "\n" << std::string(8, ' ') ;
 
     if (t.ndim() == 0){
-        print_scalar(os, t.data_, 0, t.dtype());
+        print_scalar(os, print_ptr, 0, t.dtype());
     }else{
-        print_tensor_data(os, t, 0, 0, 8);
+        print_tensor_data(os, print_ptr, t, 0, 0, 8);
     }
 
     return os;
@@ -354,27 +380,28 @@ Tensor Tensor::transpose(int64_t dim0, int64_t dim1) const {
         DISPATCH_ALL_TYPES(this->dtype_, scalar_t, {
             // Datos destino y origen
             const auto* src_ptr = static_cast<scalar_t*>(data_);
-            auto* set_ptr = static_cast<scalar_t*>(t.data_);
+            auto* dst_ptr = static_cast<scalar_t*>(t.data_);
 
             for (uint64_t i = 0; i < t.numel_; i++){
-                set_ptr[i] = src_ptr[src_offset];
+                // 1. Descomponer el índice plano 'i' en coordenadas de new_shape
+                // 2. Mapear esas coordenadas contra new_strides para hallar src_offset
+                int64_t temp = i;
+                int64_t src_offset = 0;
 
-                for (int64_t d = ndim -1; d >= 0; --d){
-                    coords[d] += 1;
-                    src_offset += new_strides[d];
-
-                    if (coords[d] < new_shape[d]){
-                        break;
-                    }
-
-                    src_offset -= (coords[d] * new_strides[d]);
-                    coords[d] = 0;
+                for (int64_t d = ndim - 1; d >= 0; --d) {
+                    int64_t coord = temp % new_shape[d];
+                    temp /= new_shape[d];
+                    src_offset += coord * new_strides[d];
                 }
+
+                // 3. Copiar directamente de src a dst
+                dst_ptr[i] = src_ptr[src_offset];
             }
         });
 
     }else{
-        throw std::runtime_error("Version CUDA no implementada");
+        cuda_transpose(t.data_, data_, t.numel_, ndim,
+                       new_shape.data(), new_strides.data(), t.dtype());
     }
 
 
@@ -384,33 +411,47 @@ Tensor Tensor::transpose(int64_t dim0, int64_t dim1) const {
 Tensor Tensor::flatten() const{
 
     int64_t d = numel_;
+
+    if (numel_ == 0) {
+        return Tensor({0}, dtype_, device_);
+    }
     // Our new tensor is going to have shape (numel, )
     Tensor t = Tensor({d}, dtype_, device_);
 
-    // Copiamos data en bloque porque es contiguo
-    std::memcpy(t.data_, data_, this->numel_*this->get_element_size(this->dtype_));
+
+    size_t bytes = this->numel_ * this->get_element_size(this->dtype_);
+    if (device_ == Device::CPU) {
+        std::memcpy(t.data_, data_, bytes);
+    } else {
+        cudaError_t err = cudaMemcpy(t.data_, data_, bytes, cudaMemcpyDeviceToDevice);
+        if (err != cudaSuccess) {
+            throw std::runtime_error(std::string("Error en cudaMemcpy en flatten: ") + cudaGetErrorString(err));
+        }
+    }
     return t;
 }
 
 // Inicializacion de pesos
 Tensor Tensor::randn(const std::vector<int64_t>& shape, float mean, float std, DType dtype, Device device) {
-    if (device != Device::CPU) {
-        throw std::invalid_argument("CUDA no soportado");
-    }
 
     Tensor t(shape, dtype, device);
 
-    // Generador aleatorio estándar en C++
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::normal_distribution<float> dist(mean, std);
+    if (t.numel() == 0) return t;
+    if (device == Device::CPU) {
+        // Generador aleatorio estándar en C++
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::normal_distribution<float> dist(mean, std);
 
-    DISPATCH_ALL_TYPES(dtype, scalar_t, {
-        scalar_t* ptr = t.data_ptr<scalar_t>();
-        for (uint64_t i = 0; i < t.numel(); ++i) {
-            ptr[i] = static_cast<scalar_t>(dist(gen));
-        }
-    });
+        DISPATCH_ALL_TYPES(dtype, scalar_t, {
+            scalar_t* ptr = static_cast<scalar_t *>(t.data_);
+            for (uint64_t i = 0; i < t.numel(); ++i) {
+                ptr[i] = static_cast<scalar_t>(dist(gen));
+            }
+        });
+    }else{
+        cuda_randn(t.data_, t.numel(), mean, std, dtype);
+    }
 
     return t;
 }
