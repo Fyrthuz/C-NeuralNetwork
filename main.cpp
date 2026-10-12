@@ -191,22 +191,29 @@ int main() {
     }
 
 
+    // CUDA ya esta implementado: zeros() debe crear el tensor en la GPU
     try {
 
-        Tensor::zeros(
+        Tensor gpu_zeros = Tensor::zeros(
             {2, 2},
             DType::F32,
             Device::CUDA
         );
 
-        assert(false);
+        assert(gpu_zeros.device() == Device::CUDA);
+        assert(gpu_zeros.numel() == 4);
+        assert(gpu_zeros.data() != nullptr);
+
+        std::cout << "-> CUDA zeros() OK: tensor en GPU con numel=4\n";
 
     } catch (const std::runtime_error& e) {
 
         std::cout
-            << "-> Excepcion esperada capturada: "
+            << "-> [ERROR] CUDA zeros() fallo: "
             << e.what()
             << "\n";
+
+        assert(false);
     }
 
 

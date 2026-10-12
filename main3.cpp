@@ -153,7 +153,7 @@ int main() {
     std::cout << "\n--- TEST 3: Tensor::ones en CUDA con F32/F64/I32/I64 ---\n";
 
     {
-        struct Case { DType dt; const char* name; };
+        struct Case { DType dtype; const char* name; };
         Case cases[] = {
             {DType::F32, "F32"}, {DType::F64, "F64"},
             {DType::I32, "I32"}, {DType::I64, "I64"}

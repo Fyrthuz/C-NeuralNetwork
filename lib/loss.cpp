@@ -1,4 +1,5 @@
 #include "tensor.h"
+#include "kernel_operations.h"
 #include "loss.h"
 #include <cmath>
 
@@ -49,7 +50,10 @@ LossResult cross_entropy(Tensor output, Tensor ground_truth, Device device, DTyp
             loss_ptr[0] = -total_loss * b_inv;
         });
     }else{
-        throw std::invalid_argument("CUDA no soportado");
+        // b_inv = 1 / batch_size (el mismo factor que usa la rama CPU)
+        const float b_inv = 1.0f / static_cast<float>(batch_size);
+        cuda_cross_entropy_loss(loss.data(), output.data(), ground_truth.data(), output.numel(), eps, b_inv, loss.dtype());
+        cuda_cross_entropy_grad(grad.data(), output.data(), ground_truth.data(), output.numel(), b_inv, grad.dtype());
     }
 
     return {loss, grad};

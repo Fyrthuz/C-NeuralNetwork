@@ -9,6 +9,14 @@
 #include <vector>
 #include <numeric>
 #include <limits>
+#include "kernel_operations.h"
+
+
+// Discriminante de operación para las ramas CUDA de binary_operation.
+// No se puede hacer switch sobre la lambda `op` (cada lambda tiene un tipo
+// anónimo único y switch necesita una expresión integral/enum), así que
+// add/sub/mult/div pasan también este enum para elegir el kernel correcto.
+enum class BinOpKind { Add, Sub, Mult, Div };
 
 
 struct BroadcastResult {
@@ -59,7 +67,7 @@ BroadcastResult get_broadcast_strides(const Tensor& t, const Tensor& p) {
 }
 
 template<typename Op>
-Tensor binary_operation(const Tensor& t, const Tensor& p, Op op){
+Tensor binary_operation(const Tensor& t, const Tensor& p, Op op, BinOpKind kind){
     // Checkeos de device y de tisor& t, const Tensor& p, Op op){
     // Checkeos de device y de tipo de datos
     if (t.device() != p.device()){
@@ -83,7 +91,13 @@ Tensor binary_operation(const Tensor& t, const Tensor& p, Op op){
                 }
             });
         }else{
-            throw std::invalid_argument("CUDA no soportado");
+            // Camino GPU mismo-shape: el enum selecciona el kernel/functor.
+            switch (kind) {
+                case BinOpKind::Add:  cuda_add_same(result.data(), t.data(), p.data(), result.numel(), result.dtype()); break;
+                case BinOpKind::Sub:  cuda_sub_same(result.data(), t.data(), p.data(), result.numel(), result.dtype()); break;
+                case BinOpKind::Mult: cuda_mult_same(result.data(), t.data(), p.data(), result.numel(), result.dtype()); break;
+                case BinOpKind::Div:  cuda_div_same(result.data(), t.data(), p.data(), result.numel(), result.dtype()); break;
+            }
         }
         return result;
     }
@@ -128,7 +142,27 @@ Tensor binary_operation(const Tensor& t, const Tensor& p, Op op){
         });
 
     }else{
-        throw std::invalid_argument("CUDA no implementado");
+        // Camino GPU con broadcasting: los metadatos expandidos (`br`) ya
+        // están calculados arriba; solo hay que reenviarlos al lanzador.
+        const int ndim = static_cast<int>(br.shape.size());
+        switch (kind) {
+            case BinOpKind::Add:
+                cuda_add_broadcast(result.data(), t.data(), p.data(), result.numel(), ndim,
+                                   br.shape.data(), br.stride_a.data(), br.stride_b.data(), result.dtype());
+                break;
+            case BinOpKind::Sub:
+                cuda_sub_broadcast(result.data(), t.data(), p.data(), result.numel(), ndim,
+                                   br.shape.data(), br.stride_a.data(), br.stride_b.data(), result.dtype());
+                break;
+            case BinOpKind::Mult:
+                cuda_mult_broadcast(result.data(), t.data(), p.data(), result.numel(), ndim,
+                                   br.shape.data(), br.stride_a.data(), br.stride_b.data(), result.dtype());
+                break;
+            case BinOpKind::Div:
+                cuda_div_broadcast(result.data(), t.data(), p.data(), result.numel(), ndim,
+                                   br.shape.data(), br.stride_a.data(), br.stride_b.data(), result.dtype());
+                break;
+        }
     }
 
 
@@ -138,22 +172,22 @@ Tensor binary_operation(const Tensor& t, const Tensor& p, Op op){
 
 
 Tensor add(Tensor t, Tensor p){
-    return binary_operation(t, p, [](auto a, auto b) -> auto {return a + b;} );
+    return binary_operation(t, p, [](auto a, auto b) -> auto {return a + b;}, BinOpKind::Add);
 }
 
 
 Tensor sub(Tensor t, Tensor p){
-   return binary_operation(t, p, [](auto a, auto b) -> auto { return a - b;} );
+   return binary_operation(t, p, [](auto a, auto b) -> auto { return a - b;}, BinOpKind::Sub);
 }
 
 
 
 Tensor mult(Tensor t, Tensor p){
-    return binary_operation(t, p, [](auto a, auto b) -> auto {return a * b;} );
+    return binary_operation(t, p, [](auto a, auto b) -> auto {return a * b;}, BinOpKind::Mult);
 }
 
 Tensor div(Tensor t, Tensor p){
-    return binary_operation(t, p, [](auto a, auto b) -> auto {return a / b;} );
+    return binary_operation(t, p, [](auto a, auto b) -> auto {return a / b;}, BinOpKind::Div);
 }
 
 
@@ -211,7 +245,44 @@ Tensor matmul(Tensor t, Tensor p){
 
     // Hacemos los calculos
     if (t.device() == Device::CUDA){
-        throw std::invalid_argument("CUDA no soportado");
+        // Igual que la version CPU: el loop de batches vive aqui (host) y cada
+        // matmul 2D se lanza como un kernel con los punteros ya desplazados.
+        DISPATCH_ALL_TYPES(result.dtype(), scalar_t, {
+            scalar_t* result_ptr = result.data_ptr<scalar_t>();
+            const scalar_t* v1 = t.data_ptr<scalar_t>();
+            const scalar_t* v2 = p.data_ptr<scalar_t>();
+
+            int64_t offset_batch_a = 0;
+            int64_t offset_batch_b = 0;
+            std::vector<int64_t> coord(batch_ndim, 0);
+            int64_t matrix_size = M * N;
+
+            // Iteramos por todo el batch
+            for (int64_t b = 0; b < total_batches; ++b) {
+                cuda_matmul_2d(result_ptr + (b * matrix_size),
+                               v1 + offset_batch_a,
+                               v2 + offset_batch_b,
+                               M, K1, N,
+                               stride_t_M, stride_t_K,
+                               stride_p_K, stride_p_N,
+                               result.dtype());
+
+                // Odometro para avanzar en las dimensiones de batch (identico al CPU)
+                for (int64_t d = batch_ndim - 1; d >= 0; --d) {
+                    coord[d] += 1;
+                    offset_batch_a += br.stride_a[d];
+                    offset_batch_b += br.stride_b[d];
+
+                    if (coord[d] < br.shape[d]) {
+                        break;
+                    }
+
+                    offset_batch_a -= (coord[d] * br.stride_a[d]);
+                    offset_batch_b -= (coord[d] * br.stride_b[d]);
+                    coord[d] = 0;
+                }
+            }
+        });
     }else{
         DISPATCH_ALL_TYPES(result.dtype(), scalar_t, {
             scalar_t* result_ptr = result.data_ptr<scalar_t>();
@@ -280,7 +351,7 @@ Tensor relu(const Tensor& t){
         })
 
     }else{
-        throw std::invalid_argument("CUDA aun no soportado");
+        cuda_relu(result.data(), t.data(), t.numel(), t.dtype());
     }
     return result;
 }
@@ -330,7 +401,10 @@ Tensor softmax(const Tensor& t, int64_t dim = -1){
         });
 
     }else{
-        throw std::invalid_argument("CUDA aun no soportado");
+        int64_t ndim = t.shape().size();
+        int64_t C = t.shape()[ndim - 1];          // Tamaño de la dimensión softmax (ej: num_clases)
+        int64_t outer_size = t.numel() / C;      // Número total de vectores/filas a normalizar
+        cuda_softmax(result.data(), t.data(), outer_size, C, result.dtype());
     }
     return result;
 }
