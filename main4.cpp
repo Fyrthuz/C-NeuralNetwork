@@ -117,12 +117,14 @@ static std::vector<float> to_host_float(const Tensor& t) {
 }
 
 // ============================================================
-// MLP generico: Linear + ReLU por capa oculta; el softmax se aplica
-// junto con cross_entropy (probs = softmax(logits)).
+// MLP generico: Linear + ReLU por capa oculta y una capa SoftMax
+// propia al final. El forward devuelve probabilidades; el backward
+// arranca con el Jacobiano del SoftMax (dL/dp -> dL/dz).
 // ============================================================
 struct MLP {
     std::vector<LinearLayer> linears;
     std::vector<ReLU> relus;
+    SoftMax softmax_layer;
     Device device;
     DType dtype;
 
@@ -144,11 +146,13 @@ struct MLP {
             h = linears[i].forward(h);
             if (i + 1 < linears.size()) h = relus[i].forward(h);
         }
-        return h;  // logits
+        return softmax_layer.forward(h);  // logits -> probabilidades
     }
 
-    void backward(const Tensor& d_logits) {
-        Tensor d = linears.back().backward(d_logits);
+    void backward(const Tensor& d_output) {
+        // d_output = dL/dp (gradiente respecto a las probabilidades)
+        Tensor d = softmax_layer.backward(d_output);  // -> dL/dz (logits)
+        d = linears.back().backward(d);
         for (int64_t i = static_cast<int64_t>(linears.size()) - 2; i >= 0; --i) {
             d = relus[i].backward(d);
             d = linears[i].backward(d);
@@ -171,8 +175,7 @@ static float evaluate_accuracy(MLP& model, const MNISTDataset& dataset,
         dataset.get_batch(b * eval_batch, eval_batch, bx_cpu, by_cpu);
 
         Tensor bx = to_device(bx_cpu, device, dtype);
-        Tensor logits = model.forward(bx);
-        Tensor probs = softmax(logits);
+        Tensor probs = model.forward(bx);  // el MLP termina en la capa SoftMax
 
         std::vector<float> hp = to_host_float(probs);
         const float* gt = by_cpu.data_ptr<float>();
@@ -358,12 +361,11 @@ int main(int argc, char** argv) {
             // 1. Limpieza de gradientes
             optimizer.zero_grad();
 
-            // 2. Forward
-            Tensor logits = model.forward(bx);
-            Tensor probs = softmax(logits);
+            // 2. Forward (el MLP termina en la capa SoftMax -> probabilidades)
+            Tensor probs = model.forward(bx);
 
-            // 3. Loss + gradiente
-            LossResult res = cross_entropy(probs, by, device, dtype);
+            // 3. Loss + gradiente respecto a las probabilidades (dL/dp)
+            LossResult res = cross_entropy_probs(probs, by, device, dtype);
 
             // 4. Backward
             model.backward(res.grad);

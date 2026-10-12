@@ -76,6 +76,12 @@ void cuda_cross_entropy_grad(void* grad_out,
                              const void* target,
                              uint64_t total, float b_inv, DType dtype);
 
+// Gradiente respecto a las PROBABILIDADES: -Y/(P*B), 0 donde P < eps.
+void cuda_cross_entropy_probs_grad(void* grad_out,
+                                   const void* probs,
+                                   const void* target,
+                                   uint64_t total, float eps, float b_inv, DType dtype);
+
 // Implementada en loss.cu sin atómicos (atomicAdd(double) no existe < sm_60):
 // sumas parciales por bloque + un bloque final que escribe -suma * b_inv.
 void cuda_cross_entropy_loss(void* loss_out,

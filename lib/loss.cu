@@ -49,6 +49,44 @@ void cuda_cross_entropy_grad(void* grad_out, const void* probs, const void* targ
 }
 
 
+// ------------------- Gradiente respecto a las probabilidades -------------------
+// dL/dp = -Y / (P * B)  (0 donde P < eps)
+template<typename scalar_t>
+__global__ void ce_probs_grad_kernel(scalar_t* __restrict__ grad,
+                                     const scalar_t* __restrict__ probs,
+                                     const scalar_t* __restrict__ target,
+                                     uint64_t total, scalar_t eps, scalar_t b_inv){
+    uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < total) {
+        scalar_t p = probs[i];
+        grad[i] = (p > eps) ? -target[i] * b_inv / p : static_cast<scalar_t>(0);
+    }
+}
+
+
+void cuda_cross_entropy_probs_grad(void* grad_out, const void* probs, const void* target,
+                                   uint64_t total, float eps, float b_inv, DType dtype){
+    if (total == 0) return;
+
+    DISPATCH_ALL_TYPES(dtype, scalar_t, {
+        int threads = 256;
+        int blocks = static_cast<int>((total + threads - 1) / threads);
+        ce_probs_grad_kernel<scalar_t><<<blocks, threads>>>(
+            static_cast<scalar_t*>(grad_out),
+            static_cast<const scalar_t*>(probs),
+            static_cast<const scalar_t*>(target),
+            total,
+            static_cast<scalar_t>(eps),
+            static_cast<scalar_t>(b_inv));
+    });
+
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        throw std::runtime_error("Error en cuda_cross_entropy_probs_grad: " + std::string(cudaGetErrorString(err)));
+    }
+}
+
+
 // ------------------- Loss: suma parcial por bloque -------------------
 template<typename scalar_t>
 __global__ void ce_loss_partials_kernel(scalar_t* __restrict__ partials,
