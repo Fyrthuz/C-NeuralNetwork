@@ -1,2 +1,5 @@
 programa.out
+train_mnist.out
 *.csv
+!comparativa.csv
+*.out

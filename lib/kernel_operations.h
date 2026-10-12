@@ -49,6 +49,9 @@ void cuda_relu(void* out, const void* in,  uint64_t n, DType dtype);
 
 void cuda_softmax(void* out, const void* in,  int64_t outer, int64_t C, DType dtype);
 
+void cuda_softmax_backward(void* grad_in, const void* grad_out, const void* probs,
+                           int64_t outer, int64_t C, DType dtype);
+
 // === matmul ===
 void cuda_matmul_2d(void* out, const void* a, const void* b,
                     int64_t M, int64_t K, int64_t N,
@@ -63,6 +66,9 @@ void cuda_bias_accum(void* d_bias, const void* d_output,
 // === relu backward ===
 void cuda_relu_backward(void* grad_in, const void* grad_out,
                         const void* input_cache, uint64_t n, DType dtype);
+
+// === SGD step: param -= lr * grad ===
+void cuda_sgd_step(void* param, const void* grad, float lr, uint64_t n, DType dtype);
 
 // === cross_entropy ===
 void cuda_cross_entropy_grad(void* grad_out,

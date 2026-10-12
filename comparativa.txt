@@ -1,0 +1,846 @@
+======================================================================
+ COMPARATIVA GPU vs CPU - MLP en MNIST (main4)
+ Fecha:          2026-10-12 17:44:06
+ GPU:            NVIDIA GeForce RTX 5080
+ Arquitecturas:  784,10 784,128,10 784,128,64,10 784,128,64,32,10
+ Dtypes:         f32 f64
+ Epocas:         15
+ Muestras train: todas (60000)
+======================================================================
+
+----------------------------------------------------------------------
+ [1/16] arquitectura=784,10 | device=cuda | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F32
+ Capas:      784 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.5058 | 0.26s
+Epoca [ 2/15] | Loss Promedio: 0.3477 | 0.26s
+Epoca [ 3/15] | Loss Promedio: 0.3224 | 0.26s
+Epoca [ 4/15] | Loss Promedio: 0.3091 | 0.26s
+Epoca [ 5/15] | Loss Promedio: 0.3005 | 0.26s
+Epoca [ 6/15] | Loss Promedio: 0.2943 | 0.26s
+Epoca [ 7/15] | Loss Promedio: 0.2896 | 0.26s
+Epoca [ 8/15] | Loss Promedio: 0.2857 | 0.26s
+Epoca [ 9/15] | Loss Promedio: 0.2826 | 0.26s
+Epoca [10/15] | Loss Promedio: 0.2799 | 0.26s
+Epoca [11/15] | Loss Promedio: 0.2776 | 0.26s
+Epoca [12/15] | Loss Promedio: 0.2755 | 0.26s
+Epoca [13/15] | Loss Promedio: 0.2737 | 0.26s
+Epoca [14/15] | Loss Promedio: 0.2721 | 0.26s
+Epoca [15/15] | Loss Promedio: 0.2706 | 0.26s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 92.40%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      92.11%
+==========================================
+Tiempo total de entrenamiento: 3.86s
+==========================================
+
+>>> RESULTADO [784,10 | cuda | f32]: tiempo=3.86s | s/epoca=0.26 | acc_train=92.40% | acc_test=92.11%
+
+----------------------------------------------------------------------
+ [2/16] arquitectura=784,10 | device=cuda | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F64
+ Capas:      784 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.5100 | 0.30s
+Epoca [ 2/15] | Loss Promedio: 0.3483 | 0.30s
+Epoca [ 3/15] | Loss Promedio: 0.3227 | 0.29s
+Epoca [ 4/15] | Loss Promedio: 0.3093 | 0.29s
+Epoca [ 5/15] | Loss Promedio: 0.3006 | 0.29s
+Epoca [ 6/15] | Loss Promedio: 0.2943 | 0.29s
+Epoca [ 7/15] | Loss Promedio: 0.2895 | 0.29s
+Epoca [ 8/15] | Loss Promedio: 0.2857 | 0.29s
+Epoca [ 9/15] | Loss Promedio: 0.2825 | 0.29s
+Epoca [10/15] | Loss Promedio: 0.2798 | 0.30s
+Epoca [11/15] | Loss Promedio: 0.2775 | 0.29s
+Epoca [12/15] | Loss Promedio: 0.2755 | 0.30s
+Epoca [13/15] | Loss Promedio: 0.2737 | 0.30s
+Epoca [14/15] | Loss Promedio: 0.2720 | 0.29s
+Epoca [15/15] | Loss Promedio: 0.2706 | 0.30s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 92.37%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      92.12%
+==========================================
+Tiempo total de entrenamiento: 4.43s
+==========================================
+
+>>> RESULTADO [784,10 | cuda | f64]: tiempo=4.43s | s/epoca=0.29 | acc_train=92.37% | acc_test=92.12%
+
+----------------------------------------------------------------------
+ [3/16] arquitectura=784,10 | device=cpu | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F32
+ Capas:      784 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.5065 | 0.79s
+Epoca [ 2/15] | Loss Promedio: 0.3481 | 0.79s
+Epoca [ 3/15] | Loss Promedio: 0.3227 | 0.79s
+Epoca [ 4/15] | Loss Promedio: 0.3094 | 0.78s
+Epoca [ 5/15] | Loss Promedio: 0.3008 | 0.79s
+Epoca [ 6/15] | Loss Promedio: 0.2945 | 0.79s
+Epoca [ 7/15] | Loss Promedio: 0.2897 | 0.79s
+Epoca [ 8/15] | Loss Promedio: 0.2859 | 0.79s
+Epoca [ 9/15] | Loss Promedio: 0.2827 | 0.79s
+Epoca [10/15] | Loss Promedio: 0.2800 | 0.80s
+Epoca [11/15] | Loss Promedio: 0.2777 | 0.79s
+Epoca [12/15] | Loss Promedio: 0.2756 | 0.79s
+Epoca [13/15] | Loss Promedio: 0.2738 | 0.79s
+Epoca [14/15] | Loss Promedio: 0.2722 | 0.79s
+Epoca [15/15] | Loss Promedio: 0.2707 | 0.79s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 92.38%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      92.12%
+==========================================
+Tiempo total de entrenamiento: 11.80s
+==========================================
+
+>>> RESULTADO [784,10 | cpu | f32]: tiempo=11.80s | s/epoca=0.79 | acc_train=92.38% | acc_test=92.12%
+
+----------------------------------------------------------------------
+ [4/16] arquitectura=784,10 | device=cpu | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F64
+ Capas:      784 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.5078 | 0.80s
+Epoca [ 2/15] | Loss Promedio: 0.3482 | 0.80s
+Epoca [ 3/15] | Loss Promedio: 0.3226 | 0.80s
+Epoca [ 4/15] | Loss Promedio: 0.3092 | 0.80s
+Epoca [ 5/15] | Loss Promedio: 0.3005 | 0.80s
+Epoca [ 6/15] | Loss Promedio: 0.2943 | 0.80s
+Epoca [ 7/15] | Loss Promedio: 0.2895 | 0.80s
+Epoca [ 8/15] | Loss Promedio: 0.2857 | 0.80s
+Epoca [ 9/15] | Loss Promedio: 0.2825 | 0.80s
+Epoca [10/15] | Loss Promedio: 0.2798 | 0.80s
+Epoca [11/15] | Loss Promedio: 0.2775 | 0.80s
+Epoca [12/15] | Loss Promedio: 0.2754 | 0.82s
+Epoca [13/15] | Loss Promedio: 0.2736 | 0.82s
+Epoca [14/15] | Loss Promedio: 0.2720 | 0.81s
+Epoca [15/15] | Loss Promedio: 0.2705 | 0.81s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 92.38%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      92.19%
+==========================================
+Tiempo total de entrenamiento: 12.08s
+==========================================
+
+>>> RESULTADO [784,10 | cpu | f64]: tiempo=12.08s | s/epoca=0.80 | acc_train=92.38% | acc_test=92.19%
+
+----------------------------------------------------------------------
+ [5/16] arquitectura=784,128,10 | device=cuda | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F32
+ Capas:      784 -> 128 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3978 | 0.52s
+Epoca [ 2/15] | Loss Promedio: 0.2177 | 0.51s
+Epoca [ 3/15] | Loss Promedio: 0.1676 | 0.51s
+Epoca [ 4/15] | Loss Promedio: 0.1375 | 0.52s
+Epoca [ 5/15] | Loss Promedio: 0.1172 | 0.51s
+Epoca [ 6/15] | Loss Promedio: 0.1023 | 0.52s
+Epoca [ 7/15] | Loss Promedio: 0.0907 | 0.53s
+Epoca [ 8/15] | Loss Promedio: 0.0814 | 0.53s
+Epoca [ 9/15] | Loss Promedio: 0.0737 | 0.51s
+Epoca [10/15] | Loss Promedio: 0.0671 | 0.51s
+Epoca [11/15] | Loss Promedio: 0.0615 | 0.53s
+Epoca [12/15] | Loss Promedio: 0.0566 | 0.55s
+Epoca [13/15] | Loss Promedio: 0.0523 | 0.53s
+Epoca [14/15] | Loss Promedio: 0.0485 | 0.53s
+Epoca [15/15] | Loss Promedio: 0.0451 | 0.53s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 98.73%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.68%
+==========================================
+Tiempo total de entrenamiento: 7.84s
+==========================================
+
+>>> RESULTADO [784,128,10 | cuda | f32]: tiempo=7.84s | s/epoca=0.52 | acc_train=98.73% | acc_test=97.68%
+
+----------------------------------------------------------------------
+ [6/16] arquitectura=784,128,10 | device=cuda | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F64
+ Capas:      784 -> 128 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3882 | 0.59s
+Epoca [ 2/15] | Loss Promedio: 0.2171 | 0.59s
+Epoca [ 3/15] | Loss Promedio: 0.1688 | 0.57s
+Epoca [ 4/15] | Loss Promedio: 0.1390 | 0.57s
+Epoca [ 5/15] | Loss Promedio: 0.1185 | 0.58s
+Epoca [ 6/15] | Loss Promedio: 0.1031 | 0.58s
+Epoca [ 7/15] | Loss Promedio: 0.0911 | 0.60s
+Epoca [ 8/15] | Loss Promedio: 0.0816 | 0.59s
+Epoca [ 9/15] | Loss Promedio: 0.0736 | 0.61s
+Epoca [10/15] | Loss Promedio: 0.0670 | 0.59s
+Epoca [11/15] | Loss Promedio: 0.0613 | 0.59s
+Epoca [12/15] | Loss Promedio: 0.0564 | 0.59s
+Epoca [13/15] | Loss Promedio: 0.0521 | 0.59s
+Epoca [14/15] | Loss Promedio: 0.0483 | 0.59s
+Epoca [15/15] | Loss Promedio: 0.0449 | 0.59s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 98.74%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.59%
+==========================================
+Tiempo total de entrenamiento: 8.83s
+==========================================
+
+>>> RESULTADO [784,128,10 | cuda | f64]: tiempo=8.83s | s/epoca=0.59 | acc_train=98.74% | acc_test=97.59%
+
+----------------------------------------------------------------------
+ [7/16] arquitectura=784,128,10 | device=cpu | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F32
+ Capas:      784 -> 128 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3875 | 9.56s
+Epoca [ 2/15] | Loss Promedio: 0.2136 | 9.59s
+Epoca [ 3/15] | Loss Promedio: 0.1669 | 9.53s
+Epoca [ 4/15] | Loss Promedio: 0.1381 | 9.52s
+Epoca [ 5/15] | Loss Promedio: 0.1180 | 9.51s
+Epoca [ 6/15] | Loss Promedio: 0.1030 | 9.52s
+Epoca [ 7/15] | Loss Promedio: 0.0913 | 9.51s
+Epoca [ 8/15] | Loss Promedio: 0.0819 | 9.51s
+Epoca [ 9/15] | Loss Promedio: 0.0740 | 9.50s
+Epoca [10/15] | Loss Promedio: 0.0675 | 9.51s
+Epoca [11/15] | Loss Promedio: 0.0619 | 9.53s
+Epoca [12/15] | Loss Promedio: 0.0569 | 9.57s
+Epoca [13/15] | Loss Promedio: 0.0526 | 9.64s
+Epoca [14/15] | Loss Promedio: 0.0487 | 9.67s
+Epoca [15/15] | Loss Promedio: 0.0453 | 9.67s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 98.73%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.49%
+==========================================
+Tiempo total de entrenamiento: 143.34s
+==========================================
+
+>>> RESULTADO [784,128,10 | cpu | f32]: tiempo=143.34s | s/epoca=9.56 | acc_train=98.73% | acc_test=97.49%
+
+----------------------------------------------------------------------
+ [8/16] arquitectura=784,128,10 | device=cpu | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F64
+ Capas:      784 -> 128 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3971 | 11.94s
+Epoca [ 2/15] | Loss Promedio: 0.2162 | 11.95s
+Epoca [ 3/15] | Loss Promedio: 0.1676 | 11.98s
+Epoca [ 4/15] | Loss Promedio: 0.1375 | 11.96s
+Epoca [ 5/15] | Loss Promedio: 0.1167 | 11.80s
+Epoca [ 6/15] | Loss Promedio: 0.1014 | 11.73s
+Epoca [ 7/15] | Loss Promedio: 0.0897 | 11.82s
+Epoca [ 8/15] | Loss Promedio: 0.0802 | 11.86s
+Epoca [ 9/15] | Loss Promedio: 0.0724 | 11.86s
+Epoca [10/15] | Loss Promedio: 0.0660 | 11.88s
+Epoca [11/15] | Loss Promedio: 0.0604 | 11.90s
+Epoca [12/15] | Loss Promedio: 0.0555 | 11.84s
+Epoca [13/15] | Loss Promedio: 0.0513 | 11.91s
+Epoca [14/15] | Loss Promedio: 0.0475 | 11.90s
+Epoca [15/15] | Loss Promedio: 0.0441 | 11.91s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 98.76%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.51%
+==========================================
+Tiempo total de entrenamiento: 178.26s
+==========================================
+
+>>> RESULTADO [784,128,10 | cpu | f64]: tiempo=178.26s | s/epoca=11.88 | acc_train=98.76% | acc_test=97.51%
+
+----------------------------------------------------------------------
+ [9/16] arquitectura=784,128,64,10 | device=cuda | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F32
+ Capas:      784 -> 128 -> 64 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3404 | 0.73s
+Epoca [ 2/15] | Loss Promedio: 0.1592 | 0.74s
+Epoca [ 3/15] | Loss Promedio: 0.1134 | 0.72s
+Epoca [ 4/15] | Loss Promedio: 0.0877 | 0.72s
+Epoca [ 5/15] | Loss Promedio: 0.0711 | 0.71s
+Epoca [ 6/15] | Loss Promedio: 0.0588 | 0.71s
+Epoca [ 7/15] | Loss Promedio: 0.0495 | 0.72s
+Epoca [ 8/15] | Loss Promedio: 0.0418 | 0.70s
+Epoca [ 9/15] | Loss Promedio: 0.0355 | 0.71s
+Epoca [10/15] | Loss Promedio: 0.0302 | 0.72s
+Epoca [11/15] | Loss Promedio: 0.0257 | 0.71s
+Epoca [12/15] | Loss Promedio: 0.0216 | 0.71s
+Epoca [13/15] | Loss Promedio: 0.0183 | 0.74s
+Epoca [14/15] | Loss Promedio: 0.0154 | 0.72s
+Epoca [15/15] | Loss Promedio: 0.0129 | 0.73s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.44%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.66%
+==========================================
+Tiempo total de entrenamiento: 10.78s
+==========================================
+
+>>> RESULTADO [784,128,64,10 | cuda | f32]: tiempo=10.78s | s/epoca=0.72 | acc_train=99.44% | acc_test=97.66%
+
+----------------------------------------------------------------------
+ [10/16] arquitectura=784,128,64,10 | device=cuda | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F64
+ Capas:      784 -> 128 -> 64 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3578 | 0.75s
+Epoca [ 2/15] | Loss Promedio: 0.1635 | 0.73s
+Epoca [ 3/15] | Loss Promedio: 0.1171 | 0.74s
+Epoca [ 4/15] | Loss Promedio: 0.0910 | 0.73s
+Epoca [ 5/15] | Loss Promedio: 0.0735 | 0.73s
+Epoca [ 6/15] | Loss Promedio: 0.0609 | 0.74s
+Epoca [ 7/15] | Loss Promedio: 0.0511 | 0.73s
+Epoca [ 8/15] | Loss Promedio: 0.0434 | 0.73s
+Epoca [ 9/15] | Loss Promedio: 0.0368 | 0.74s
+Epoca [10/15] | Loss Promedio: 0.0314 | 0.73s
+Epoca [11/15] | Loss Promedio: 0.0268 | 0.74s
+Epoca [12/15] | Loss Promedio: 0.0229 | 0.73s
+Epoca [13/15] | Loss Promedio: 0.0193 | 0.73s
+Epoca [14/15] | Loss Promedio: 0.0164 | 0.74s
+Epoca [15/15] | Loss Promedio: 0.0141 | 0.73s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.28%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.31%
+==========================================
+Tiempo total de entrenamiento: 11.03s
+==========================================
+
+>>> RESULTADO [784,128,64,10 | cuda | f64]: tiempo=11.03s | s/epoca=0.73 | acc_train=99.28% | acc_test=97.31%
+
+----------------------------------------------------------------------
+ [11/16] arquitectura=784,128,64,10 | device=cpu | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F32
+ Capas:      784 -> 128 -> 64 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3436 | 10.18s
+Epoca [ 2/15] | Loss Promedio: 0.1606 | 10.23s
+Epoca [ 3/15] | Loss Promedio: 0.1170 | 10.24s
+Epoca [ 4/15] | Loss Promedio: 0.0920 | 10.20s
+Epoca [ 5/15] | Loss Promedio: 0.0748 | 10.22s
+Epoca [ 6/15] | Loss Promedio: 0.0618 | 10.25s
+Epoca [ 7/15] | Loss Promedio: 0.0520 | 10.21s
+Epoca [ 8/15] | Loss Promedio: 0.0441 | 10.18s
+Epoca [ 9/15] | Loss Promedio: 0.0374 | 10.23s
+Epoca [10/15] | Loss Promedio: 0.0317 | 10.28s
+Epoca [11/15] | Loss Promedio: 0.0270 | 10.23s
+Epoca [12/15] | Loss Promedio: 0.0229 | 10.19s
+Epoca [13/15] | Loss Promedio: 0.0194 | 10.20s
+Epoca [14/15] | Loss Promedio: 0.0165 | 10.20s
+Epoca [15/15] | Loss Promedio: 0.0141 | 10.19s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.38%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.61%
+==========================================
+Tiempo total de entrenamiento: 153.25s
+==========================================
+
+>>> RESULTADO [784,128,64,10 | cpu | f32]: tiempo=153.25s | s/epoca=10.22 | acc_train=99.38% | acc_test=97.61%
+
+----------------------------------------------------------------------
+ [12/16] arquitectura=784,128,64,10 | device=cpu | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F64
+ Capas:      784 -> 128 -> 64 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3529 | 12.90s
+Epoca [ 2/15] | Loss Promedio: 0.1659 | 12.94s
+Epoca [ 3/15] | Loss Promedio: 0.1194 | 12.99s
+Epoca [ 4/15] | Loss Promedio: 0.0929 | 12.87s
+Epoca [ 5/15] | Loss Promedio: 0.0754 | 12.97s
+Epoca [ 6/15] | Loss Promedio: 0.0628 | 12.95s
+Epoca [ 7/15] | Loss Promedio: 0.0531 | 12.93s
+Epoca [ 8/15] | Loss Promedio: 0.0453 | 12.93s
+Epoca [ 9/15] | Loss Promedio: 0.0387 | 12.99s
+Epoca [10/15] | Loss Promedio: 0.0335 | 12.94s
+Epoca [11/15] | Loss Promedio: 0.0287 | 13.03s
+Epoca [12/15] | Loss Promedio: 0.0246 | 13.01s
+Epoca [13/15] | Loss Promedio: 0.0211 | 13.01s
+Epoca [14/15] | Loss Promedio: 0.0182 | 12.98s
+Epoca [15/15] | Loss Promedio: 0.0157 | 13.00s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.14%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.64%
+==========================================
+Tiempo total de entrenamiento: 194.45s
+==========================================
+
+>>> RESULTADO [784,128,64,10 | cpu | f64]: tiempo=194.45s | s/epoca=12.96 | acc_train=99.14% | acc_test=97.64%
+
+----------------------------------------------------------------------
+ [13/16] arquitectura=784,128,64,32,10 | device=cuda | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F32
+ Capas:      784 -> 128 -> 64 -> 32 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3384 | 0.86s
+Epoca [ 2/15] | Loss Promedio: 0.1439 | 0.85s
+Epoca [ 3/15] | Loss Promedio: 0.1015 | 0.85s
+Epoca [ 4/15] | Loss Promedio: 0.0778 | 0.86s
+Epoca [ 5/15] | Loss Promedio: 0.0616 | 0.85s
+Epoca [ 6/15] | Loss Promedio: 0.0491 | 0.85s
+Epoca [ 7/15] | Loss Promedio: 0.0398 | 0.86s
+Epoca [ 8/15] | Loss Promedio: 0.0320 | 0.87s
+Epoca [ 9/15] | Loss Promedio: 0.0260 | 0.88s
+Epoca [10/15] | Loss Promedio: 0.0216 | 0.87s
+Epoca [11/15] | Loss Promedio: 0.0176 | 0.87s
+Epoca [12/15] | Loss Promedio: 0.0152 | 0.89s
+Epoca [13/15] | Loss Promedio: 0.0118 | 0.88s
+Epoca [14/15] | Loss Promedio: 0.0157 | 0.88s
+Epoca [15/15] | Loss Promedio: 0.0113 | 0.89s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.38%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.59%
+==========================================
+Tiempo total de entrenamiento: 13.00s
+==========================================
+
+>>> RESULTADO [784,128,64,32,10 | cuda | f32]: tiempo=13.00s | s/epoca=0.87 | acc_train=99.38% | acc_test=97.59%
+
+----------------------------------------------------------------------
+ [14/16] arquitectura=784,128,64,32,10 | device=cuda | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CUDA (NVIDIA GeForce RTX 5080)
+ Dtype:      F64
+ Capas:      784 -> 128 -> 64 -> 32 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3326 | 0.92s
+Epoca [ 2/15] | Loss Promedio: 0.1410 | 0.92s
+Epoca [ 3/15] | Loss Promedio: 0.1009 | 0.91s
+Epoca [ 4/15] | Loss Promedio: 0.0775 | 0.92s
+Epoca [ 5/15] | Loss Promedio: 0.0612 | 0.91s
+Epoca [ 6/15] | Loss Promedio: 0.0490 | 0.92s
+Epoca [ 7/15] | Loss Promedio: 0.0393 | 0.92s
+Epoca [ 8/15] | Loss Promedio: 0.0319 | 0.91s
+Epoca [ 9/15] | Loss Promedio: 0.0257 | 0.90s
+Epoca [10/15] | Loss Promedio: 0.0210 | 0.91s
+Epoca [11/15] | Loss Promedio: 0.0177 | 0.91s
+Epoca [12/15] | Loss Promedio: 0.0146 | 0.91s
+Epoca [13/15] | Loss Promedio: 0.0124 | 0.92s
+Epoca [14/15] | Loss Promedio: 0.0104 | 0.92s
+Epoca [15/15] | Loss Promedio: 0.0081 | 0.91s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.37%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.60%
+==========================================
+Tiempo total de entrenamiento: 13.72s
+==========================================
+
+>>> RESULTADO [784,128,64,32,10 | cuda | f64]: tiempo=13.72s | s/epoca=0.91 | acc_train=99.37% | acc_test=97.60%
+
+----------------------------------------------------------------------
+ [15/16] arquitectura=784,128,64,32,10 | device=cpu | dtype=f32 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F32
+ Capas:      784 -> 128 -> 64 -> 32 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3492 | 10.35s
+Epoca [ 2/15] | Loss Promedio: 0.1485 | 10.37s
+Epoca [ 3/15] | Loss Promedio: 0.1051 | 10.38s
+Epoca [ 4/15] | Loss Promedio: 0.0801 | 10.37s
+Epoca [ 5/15] | Loss Promedio: 0.0637 | 10.47s
+Epoca [ 6/15] | Loss Promedio: 0.0506 | 10.40s
+Epoca [ 7/15] | Loss Promedio: 0.0402 | 10.42s
+Epoca [ 8/15] | Loss Promedio: 0.0323 | 10.41s
+Epoca [ 9/15] | Loss Promedio: 0.0255 | 10.35s
+Epoca [10/15] | Loss Promedio: 0.0201 | 10.34s
+Epoca [11/15] | Loss Promedio: 0.0161 | 10.37s
+Epoca [12/15] | Loss Promedio: 0.0128 | 10.40s
+Epoca [13/15] | Loss Promedio: 0.0110 | 10.38s
+Epoca [14/15] | Loss Promedio: 0.0091 | 10.36s
+Epoca [15/15] | Loss Promedio: 0.0075 | 10.33s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.73%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.64%
+==========================================
+Tiempo total de entrenamiento: 155.68s
+==========================================
+
+>>> RESULTADO [784,128,64,32,10 | cpu | f32]: tiempo=155.68s | s/epoca=10.38 | acc_train=99.73% | acc_test=97.64%
+
+----------------------------------------------------------------------
+ [16/16] arquitectura=784,128,64,32,10 | device=cpu | dtype=f64 | epocas=15
+----------------------------------------------------------------------
+==========================================
+   MLP CONFIGURABLE - MNIST (main4)       
+==========================================
+ Device:     CPU
+ Dtype:      F64
+ Capas:      784 -> 128 -> 64 -> 32 -> 10
+ Epocas:     15
+ Batch:      64
+ LR:         0.08
+==========================================
+
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_train.csv/mnist_train.csv...
+[OK] Muestras cargadas: 60000
+[INFO] Muestras de entrenamiento: 60000 | Batches por epoca: 937
+
+==========================================
+            ENTRENAMIENTO                 
+==========================================
+Epoca [ 1/15] | Loss Promedio: 0.3520 | 12.95s
+Epoca [ 2/15] | Loss Promedio: 0.1481 | 12.92s
+Epoca [ 3/15] | Loss Promedio: 0.1042 | 12.94s
+Epoca [ 4/15] | Loss Promedio: 0.0800 | 13.04s
+Epoca [ 5/15] | Loss Promedio: 0.0624 | 12.97s
+Epoca [ 6/15] | Loss Promedio: 0.0501 | 13.04s
+Epoca [ 7/15] | Loss Promedio: 0.0399 | 12.99s
+Epoca [ 8/15] | Loss Promedio: 0.0312 | 13.07s
+Epoca [ 9/15] | Loss Promedio: 0.0248 | 13.03s
+Epoca [10/15] | Loss Promedio: 0.0202 | 13.17s
+Epoca [11/15] | Loss Promedio: 0.0165 | 13.03s
+Epoca [12/15] | Loss Promedio: 0.0127 | 13.07s
+Epoca [13/15] | Loss Promedio: 0.0105 | 13.13s
+Epoca [14/15] | Loss Promedio: 0.0080 | 13.00s
+Epoca [15/15] | Loss Promedio: 0.0058 | 13.04s
+
+==========================================
+            EVALUACION FINAL              
+==========================================
+Precision en Entrenamiento: 99.60%
+[INFO] Leyendo dataset desde: data/mnist-main/mnist_test.csv/mnist_test.csv...
+[OK] Muestras cargadas: 10000
+Precision en Test Set:      97.69%
+==========================================
+Tiempo total de entrenamiento: 195.38s
+==========================================
+
+>>> RESULTADO [784,128,64,32,10 | cpu | f64]: tiempo=195.38s | s/epoca=13.03 | acc_train=99.60% | acc_test=97.69%
+
+
+======================================================================
+ TABLA RESUMEN
+======================================================================
+Arquitectura             Device  Dtype   Tiempo(s)   s/epoca   AccTrain    AccTest
+----------------------------------------------------------------------
+784,10                   cuda    f32          3.86      0.26     92.40%     92.11%
+784,10                   cuda    f64          4.43      0.29     92.37%     92.12%
+784,10                   cpu     f32         11.80      0.79     92.38%     92.12%
+784,10                   cpu     f64         12.08      0.80     92.38%     92.19%
+784,128,10               cuda    f32          7.84      0.52     98.73%     97.68%
+784,128,10               cuda    f64          8.83      0.59     98.74%     97.59%
+784,128,10               cpu     f32        143.34      9.56     98.73%     97.49%
+784,128,10               cpu     f64        178.26     11.88     98.76%     97.51%
+784,128,64,10            cuda    f32         10.78      0.72     99.44%     97.66%
+784,128,64,10            cuda    f64         11.03      0.73     99.28%     97.31%
+784,128,64,10            cpu     f32        153.25     10.22     99.38%     97.61%
+784,128,64,10            cpu     f64        194.45     12.96     99.14%     97.64%
+784,128,64,32,10         cuda    f32         13.00      0.87     99.38%     97.59%
+784,128,64,32,10         cuda    f64         13.72      0.91     99.37%     97.60%
+784,128,64,32,10         cpu     f32        155.68     10.38     99.73%     97.64%
+784,128,64,32,10         cpu     f64        195.38     13.03     99.60%     97.69%
+
+ Factor de aceleracion GPU vs CPU (tiempo CPU / tiempo GPU):
+   784,10                   f32   : 3.1x
+   784,10                   f64   : 2.7x
+   784,128,10               f32   : 18.3x
+   784,128,10               f64   : 20.2x
+   784,128,64,10            f32   : 14.2x
+   784,128,64,10            f64   : 17.6x
+   784,128,64,32,10         f32   : 12.0x
+   784,128,64,32,10         f64   : 14.2x
+======================================================================
+ Resultados guardados en: comparativa.txt
+                          comparativa.csv
+======================================================================

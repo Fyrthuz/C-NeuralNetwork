@@ -9,6 +9,8 @@
 
 #include "lib/tensor.h"
 #include "lib/ops.h"
+#include "lib/linear.h"
+#include "lib/loss.h"
 
 
 // ============================================================
@@ -1152,6 +1154,73 @@ int main() {
             << "-> Excepcion esperada capturada: "
             << e.what()
             << "\n";
+    }
+
+
+    // ============================================================
+    // TEST 27 - SoftMax como capa propia (forward + backward)
+    // ============================================================
+
+    std::cout
+        << "\n--- TEST 27: SoftMax capa (forward + backward) ---\n";
+
+    {
+        const int B = 4, C = 5;
+
+        Tensor logits({B, C}, DType::F32, Device::CPU);
+        Tensor y({B, C}, DType::F32, Device::CPU);
+
+        auto* lg = logits.data_ptr<float>();
+        auto* yg = y.data_ptr<float>();
+
+        for (int i = 0; i < B * C; ++i) {
+            lg[i] = 0.7f * std::sin(0.9f * static_cast<float>(i));
+        }
+        for (int b = 0; b < B; ++b) {
+            for (int c = 0; c < C; ++c) {
+                yg[b * C + c] = (c == b % C) ? 1.0f : 0.0f;
+            }
+        }
+
+        // Forward de la capa: debe coincidir con el op softmax y sumar 1 por fila
+        SoftMax sm;
+        Tensor probs = sm.forward(logits);
+        Tensor probs_op = softmax(logits);
+
+        auto* pp = probs.data_ptr<float>();
+        auto* po = probs_op.data_ptr<float>();
+
+        for (int i = 0; i < B * C; ++i) {
+            assert(almost_equal(pp[i], po[i]));
+        }
+        for (int b = 0; b < B; ++b) {
+            float s = 0.0f;
+            for (int c = 0; c < C; ++c) s += pp[b * C + c];
+            assert(almost_equal(s, 1.0f));
+        }
+
+        // Gradiente fusionado de la loss: dL/dz = (P - Y) / B
+        LossResult res = cross_entropy(probs, y, Device::CPU, DType::F32);
+        const float* dz_fused = res.grad.data_ptr<float>();
+
+        // Camino por capas: dL/dp = -Y / (P * B), luego backward del softmax
+        Tensor d_probs({B, C}, DType::F32, Device::CPU);
+        auto* dp = d_probs.data_ptr<float>();
+        const float b_inv = 1.0f / static_cast<float>(B);
+
+        for (int i = 0; i < B * C; ++i) {
+            dp[i] = -yg[i] / pp[i] * b_inv;
+        }
+
+        Tensor dz_layer = sm.backward(d_probs);
+        const float* dzl = dz_layer.data_ptr<float>();
+
+        for (int i = 0; i < B * C; ++i) {
+            assert(almost_equal(dzl[i], dz_fused[i]));
+        }
+
+        std::cout
+            << "-> PASADO: SoftMax::backward == gradiente fusionado de cross_entropy.\n";
     }
 
 

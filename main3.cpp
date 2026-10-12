@@ -161,15 +161,15 @@ int main() {
 
         bool ok = true;
         for (const auto& c : cases) {
-            Tensor gpu = Tensor::ones({16}, c.dt, Device::CUDA);
+            Tensor gpu = Tensor::ones({16}, c.dtype, Device::CUDA);
 
             // Descarga y verifica que todos los elementos sean 1
-            size_t bytes = gpu.numel() * gpu.get_element_size(c.dt);
+            size_t bytes = gpu.numel() * gpu.get_element_size(c.dtype);
             std::vector<char> buf(bytes);
             cudaMemcpy(buf.data(), gpu.data(), bytes, cudaMemcpyDeviceToHost);
 
             bool all_one = true;
-            DISPATCH_ALL_TYPES(c.dt, scalar_t, {
+            DISPATCH_ALL_TYPES(c.dtype, scalar_t, {
                 const scalar_t* p = reinterpret_cast<const scalar_t*>(buf.data());
                 for (uint64_t i = 0; i < gpu.numel(); ++i) {
                     if (static_cast<double>(p[i]) != 1.0) { all_one = false; break; }

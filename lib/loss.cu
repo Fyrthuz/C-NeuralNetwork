@@ -11,8 +11,6 @@
 //   2. ce_loss_partials_kernel + ce_loss_finalize_kernel:
 //      sumas parciales por bloque (reduccion en shared memory) y un bloque
 //      final que las suma y escribe loss_out[0] = -suma * b_inv.
-//      Sin atomicAdd(double) porque no esta disponible para arquitecturas
-//      < sm_60 (y con los flags por defecto de nvcc no compila).
 // =================================================================
 
 

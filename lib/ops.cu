@@ -291,3 +291,163 @@ void cuda_softmax(void* out, const void* in, int64_t outer, int64_t C, DType dty
     }
 }
 
+
+// ------------------- Backward de SoftMax -------------------
+// dL/dz_j = p_j * (dL/dp_j - dot), con dot = sum_k dL/dp_k * p_k por fila.
+// Un bloque por fila; la reduccion de `dot` va por shared memory.
+template<typename scalar_t>
+__global__ void softmax_backward_kernel(scalar_t* __restrict__ grad_in,
+                                        const scalar_t* __restrict__ grad_out,
+                                        const scalar_t* __restrict__ probs,
+                                        int64_t C){
+    const int64_t row = blockIdx.x;
+    const int tid = threadIdx.x;
+    const int nthreads = blockDim.x;
+
+    const scalar_t* p_row  = probs    + row * C;
+    const scalar_t* dp_row = grad_out + row * C;
+    scalar_t*       o_row  = grad_in  + row * C;
+
+    __shared__ scalar_t sdot[256];
+
+    scalar_t local = static_cast<scalar_t>(0);
+    for (int64_t j = tid; j < C; j += nthreads) {
+        local += dp_row[j] * p_row[j];
+    }
+    sdot[tid] = local;
+    __syncthreads();
+    for (int s = nthreads / 2; s > 0; s >>= 1) {
+        if (tid < s) sdot[tid] += sdot[tid + s];
+        __syncthreads();
+    }
+    const scalar_t dot = sdot[0];
+
+    for (int64_t j = tid; j < C; j += nthreads) {
+        o_row[j] = p_row[j] * (dp_row[j] - dot);
+    }
+}
+
+
+void cuda_softmax_backward(void* grad_in, const void* grad_out, const void* probs,
+                           int64_t outer, int64_t C, DType dtype){
+    if (outer == 0 || C == 0) return;
+
+    DISPATCH_ALL_TYPES(dtype, scalar_t, {
+        const int threads = 256;  // == tamano de sdot en el kernel
+        softmax_backward_kernel<scalar_t><<<static_cast<unsigned>(outer), threads>>>(
+            static_cast<scalar_t*>(grad_in),
+            static_cast<const scalar_t*>(grad_out),
+            static_cast<const scalar_t*>(probs),
+            C);
+    });
+
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        throw std::runtime_error("Error en cuda_softmax_backward: " + std::string(cudaGetErrorString(err)));
+    }
+}
+
+
+// ------------------- Backward de Linear: acumular d_bias -------------------
+// Una hebra por columna j; suma d_output[b, j] sobre todo el batch.
+template<typename scalar_t>
+__global__ void bias_accum_kernel(scalar_t* __restrict__ d_bias,
+                                  const scalar_t* __restrict__ d_output,
+                                  int64_t batch, int64_t out_features){
+    int64_t j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (j >= out_features) return;
+
+    scalar_t sum = 0;
+    for (int64_t b = 0; b < batch; ++b) {
+        sum += d_output[b * out_features + j];
+    }
+    d_bias[j] = sum;
+}
+
+
+void cuda_bias_accum(void* d_bias, const void* d_output,
+                     int64_t batch, int64_t out_features, DType dtype){
+    if (out_features == 0 || batch == 0) return;  // sin batch, d_bias queda en ceros (ya lo puso LinearLayer::backward)
+
+    DISPATCH_ALL_TYPES(dtype, scalar_t, {
+        int threads = 256;
+        int blocks = static_cast<int>((out_features + threads - 1) / threads);
+        bias_accum_kernel<scalar_t><<<blocks, threads>>>(
+            static_cast<scalar_t*>(d_bias),
+            static_cast<const scalar_t*>(d_output),
+            batch, out_features);
+    });
+
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        throw std::runtime_error("Error en cuda_bias_accum: " + std::string(cudaGetErrorString(err)));
+    }
+}
+
+
+// ------------------- Backward de ReLU -------------------
+// grad_in[i] = (input_cache[i] > 0) ? grad_out[i] : 0
+template<typename scalar_t>
+__global__ void relu_backward_kernel(scalar_t* __restrict__ grad_in,
+                                     const scalar_t* __restrict__ grad_out,
+                                     const scalar_t* __restrict__ input_cache,
+                                     uint64_t n){
+    uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        grad_in[i] = (input_cache[i] > static_cast<scalar_t>(0)) ? grad_out[i] : static_cast<scalar_t>(0);
+    }
+}
+
+
+void cuda_relu_backward(void* grad_in, const void* grad_out,
+                        const void* input_cache, uint64_t n, DType dtype){
+    if (n == 0) return;
+
+    DISPATCH_ALL_TYPES(dtype, scalar_t, {
+        int threads = 256;
+        int blocks = static_cast<int>((n + threads - 1) / threads);
+        relu_backward_kernel<scalar_t><<<blocks, threads>>>(
+            static_cast<scalar_t*>(grad_in),
+            static_cast<const scalar_t*>(grad_out),
+            static_cast<const scalar_t*>(input_cache),
+            n);
+    });
+
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        throw std::runtime_error("Error en cuda_relu_backward: " + std::string(cudaGetErrorString(err)));
+    }
+}
+
+
+// ------------------- SGD: param -= lr * grad -------------------
+template<typename scalar_t>
+__global__ void sgd_step_kernel(scalar_t* __restrict__ param,
+                                const scalar_t* __restrict__ grad,
+                                scalar_t lr, uint64_t n){
+    uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        param[i] -= lr * grad[i];
+    }
+}
+
+
+void cuda_sgd_step(void* param, const void* grad, float lr, uint64_t n, DType dtype){
+    if (n == 0) return;
+
+    DISPATCH_ALL_TYPES(dtype, scalar_t, {
+        int threads = 256;
+        int blocks = static_cast<int>((n + threads - 1) / threads);
+        sgd_step_kernel<scalar_t><<<blocks, threads>>>(
+            static_cast<scalar_t*>(param),
+            static_cast<const scalar_t*>(grad),
+            static_cast<scalar_t>(lr),
+            n);
+    });
+
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        throw std::runtime_error("Error en cuda_sgd_step: " + std::string(cudaGetErrorString(err)));
+    }
+}
+

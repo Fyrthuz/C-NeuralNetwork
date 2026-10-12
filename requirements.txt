@@ -1,0 +1,5 @@
+# Dependencias de Python para regenerar las figuras del README (make_figures.py).
+#
+# Instalacion:             pip install -r requirements.txt
+# Alternativa sin instalar: uv run --with matplotlib python3 make_figures.py
+matplotlib>=3.8

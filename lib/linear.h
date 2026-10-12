@@ -42,7 +42,9 @@ class SoftMax{
 public:
     SoftMax() = default;
     Tensor forward(const Tensor& input);
-    
+    Tensor backward(const Tensor& d_output);
+    Tensor output_cache;
+
 private:
 };
 

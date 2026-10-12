@@ -3,9 +3,12 @@
 
 #include <vector>
 #include <stdexcept>
+#include <string>
 #include <cstring>
+#include <cuda_runtime.h>
 #include "tensor.h"
 #include "linear.h"
+#include "kernel_operations.h"
 
 class SGD {
 public:
@@ -34,10 +37,17 @@ public:
                 continue;
             }
 
-            DISPATCH_ALL_TYPES(g->dtype(), scalar_t, {
-                scalar_t* ptr = g->data_ptr<scalar_t>();
-                std::memset(ptr, 0, g->numel() * sizeof(scalar_t));
-            });
+            size_t bytes = g->numel() * g->get_element_size(g->dtype());
+
+            if (g->device() == Device::CUDA) {
+                // cudaMemset en vez de std::memset: el puntero vive en la GPU
+                cudaError_t err = cudaMemset(g->data(), 0, bytes);
+                if (err != cudaSuccess) {
+                    throw std::runtime_error(std::string("SGD::zero_grad (CUDA): ") + cudaGetErrorString(err));
+                }
+            } else {
+                std::memset(g->data(), 0, bytes);
+            }
         }
     }
 
@@ -52,16 +62,20 @@ public:
                 throw std::runtime_error("SGD: El gradiente no coincide en dimensiones con el parametro");
             }
 
-            DISPATCH_ALL_TYPES(p->dtype(), scalar_t, {
-                scalar_t* p_ptr = p->data_ptr<scalar_t>();
-                const scalar_t* g_ptr = g->data_ptr<scalar_t>();
-                uint64_t total = p->numel();
-                scalar_t rate = static_cast<scalar_t>(lr);
+            if (p->device() == Device::CUDA) {
+                cuda_sgd_step(p->data(), g->data(), lr, p->numel(), p->dtype());
+            } else {
+                DISPATCH_ALL_TYPES(p->dtype(), scalar_t, {
+                    scalar_t* p_ptr = p->data_ptr<scalar_t>();
+                    const scalar_t* g_ptr = g->data_ptr<scalar_t>();
+                    uint64_t total = p->numel();
+                    scalar_t rate = static_cast<scalar_t>(lr);
 
-                for (uint64_t i = 0; i < total; ++i) {
-                    p_ptr[i] -= rate * g_ptr[i];
-                }
-            });
+                    for (uint64_t i = 0; i < total; ++i) {
+                        p_ptr[i] -= rate * g_ptr[i];
+                    }
+                });
+            }
         }
     }
 };
