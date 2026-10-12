@@ -289,7 +289,7 @@ Cada operación tiene su kernel con un patrón común:
 - **`cross_entropy`**: kernel de gradiente `(P-Y)/B` + sumas parciales por bloque y
   kernel final que escribe `-suma * b_inv` (sin `atomicAdd(double)`, que no existe
   para arquitecturas < sm_60).
-- **Backward**: `bias_accum` (una hebra por columna) y `relu_backward` (máscara `x>0`).
+- **Backward**: `bias_accum` (un hilo por columna) y `relu_backward` (máscara `x>0`).
 - **SGD**: `zero_grad` con `cudaMemset` + kernel `param -= lr * grad`.
 
 ### Broadcasting (`lib/ops.cpp`)
